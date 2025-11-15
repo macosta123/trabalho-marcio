@@ -176,6 +176,19 @@ pip install -r requirements.txt
 python rota_google.py
 ```
 
+### 3.6. Interface Web (Streamlit)
+
+Também há uma interface visual com suporte a triangulação (A→B→C) e comparação de ordens (A→B→C vs A→C→B):
+
+```bash
+"/home/diego-silva/Downloads/trabalho marcio/.venv/bin/python" -m streamlit run app.py
+```
+
+Abra a URL local (geralmente http://localhost:8501). Selecione o modo de transporte e use as abas:
+- Rota Simples
+- Triangulação (A → B → C)
+- Triangulação Otimizada (A → B ↔ C)
+
 ---
 
 ## 4. Uso do Sistema

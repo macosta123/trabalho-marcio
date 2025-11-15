@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import os
 import datetime as dt
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, cast
 
 import streamlit as st
 from streamlit_folium import st_folium
@@ -38,7 +38,7 @@ import folium
 # Utilitários compartilhados
 # =====================================
 
-def get_gmaps_client() -> Optional[googlemaps.Client]:
+def get_gmaps_client() -> Optional[Any]:
     api_key = os.getenv("GOOGLE_MAPS_API_KEY")
     if not api_key:
         return None
@@ -111,7 +111,7 @@ def build_map(rota: Dict[str, Any], markers: List[Tuple[float, float, str, str]]
 # Lógica Directions
 # =====================================
 
-def geocode(gmaps: googlemaps.Client, s: str) -> Optional[Dict[str, float]]:
+def geocode(gmaps: Any, s: str) -> Optional[Dict[str, float]]:
     res = gmaps.geocode(s)
     if not res:
         return None
@@ -119,7 +119,7 @@ def geocode(gmaps: googlemaps.Client, s: str) -> Optional[Dict[str, float]]:
 
 
 def directions_simple(
-    gmaps: googlemaps.Client, origem: str, destino: str, mode: str
+    gmaps: Any, origem: str, destino: str, mode: str
 ) -> Optional[Dict[str, Any]]:
     o = geocode(gmaps, origem)
     d = geocode(gmaps, destino)
@@ -130,7 +130,7 @@ def directions_simple(
 
 
 def directions_with_waypoint(
-    gmaps: googlemaps.Client, origem: str, waypoint: str, destino: str, mode: str
+    gmaps: Any, origem: str, waypoint: str, destino: str, mode: str
 ) -> Optional[Dict[str, Any]]:
     o = geocode(gmaps, origem)
     w = geocode(gmaps, waypoint)
@@ -142,7 +142,7 @@ def directions_with_waypoint(
 
 
 def directions_best_of_two(
-    gmaps: googlemaps.Client, origem: str, b: str, c: str, mode: str
+    gmaps: Any, origem: str, b: str, c: str, mode: str
 ) -> Tuple[Optional[Dict[str, Any]], str]:
     """Compara A->B->C e A->C->B e retorna (rota_escolhida, ordem)."""
     rota1 = directions_with_waypoint(gmaps, origem, b, c, mode)
@@ -221,10 +221,11 @@ with aba1:
 
     if st.button("Calcular rota simples", type="primary"):
         try:
-            kwargs = {"mode": mode}
+            kwargs: Dict[str, Any] = {"mode": mode}
             if mode == "transit" and departure_time is not None:
                 kwargs["departure_time"] = departure_time
-            res = client.directions(origin=origem, destination=destino, **kwargs)
+            gm: Any = client
+            res = gm.directions(origin=origem, destination=destino, **kwargs)
             if not res:
                 st.warning("Nenhuma rota encontrada.")
             else:
@@ -260,10 +261,11 @@ with aba2:
 
     if st.button("Calcular triangulação (A→B→C)", type="primary"):
         try:
-            kwargs = {"mode": mode}
+            kwargs: Dict[str, Any] = {"mode": mode}
             if mode == "transit" and departure_time is not None:
                 kwargs["departure_time"] = departure_time
-            res = client.directions(origin=origem_t, destination=destino_t, waypoints=[inter_t], **kwargs)
+            gm: Any = client
+            res = gm.directions(origin=origem_t, destination=destino_t, waypoints=[inter_t], **kwargs)
             if not res:
                 st.warning("Nenhuma rota encontrada.")
             else:
@@ -305,8 +307,9 @@ with aba3:
     if st.button("Calcular melhor ordem (A→B↔C)", type="primary"):
         try:
             # Avaliar A->B->C vs A->C->B
-            rota_1 = client.directions(origin=origem_o, destination=c_o, waypoints=[b_o], mode=mode)
-            rota_2 = client.directions(origin=origem_o, destination=b_o, waypoints=[c_o], mode=mode)
+            gm: Any = client
+            rota_1 = gm.directions(origin=origem_o, destination=c_o, waypoints=[b_o], mode=mode)
+            rota_2 = gm.directions(origin=origem_o, destination=b_o, waypoints=[c_o], mode=mode)
             if not rota_1 and not rota_2:
                 st.warning("Nenhuma rota encontrada.")
             else:

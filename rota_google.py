@@ -37,7 +37,7 @@ import folium
 # =============================
 # FASE 1: CONFIGURAÇÃO DO CLIENTE
 # =============================
-def configurar_cliente() -> Optional[googlemaps.Client]:
+def configurar_cliente() -> Optional[Any]:
 	"""Carrega a API Key do ambiente e inicializa o cliente Google Maps."""
 	api_key = os.getenv("GOOGLE_MAPS_API_KEY")
 	if not api_key:
@@ -87,7 +87,7 @@ def _decode_route_overview(rota: Dict[str, Any]) -> List[Tuple[float, float]]:
 
 
 def obter_rota_google(
-	gmaps_client: googlemaps.Client,
+	gmaps_client: Any,
 	origem_str: str,
 	destino_str: str,
 	mode: str = "driving",
