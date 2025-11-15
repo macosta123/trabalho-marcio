@@ -1,0 +1,14 @@
+{
+  "typeCheckingMode": "basic",
+  "venv": ".venv",
+  "reportMissingTypeStubs": "none",
+  "reportMissingImports": "warning",
+  "exclude": [
+    "**/__pycache__",
+    ".venv",
+    "**/.venv",
+    "**/.eggs",
+    "**/build",
+    "**/dist"
+  ]
+}

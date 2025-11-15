@@ -1,0 +1,5 @@
+googlemaps==4.10.0
+folium==0.15.1
+python-dotenv==1.0.1
+streamlit==1.39.0
+streamlit-folium==0.20.0
