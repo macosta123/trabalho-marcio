@@ -12,7 +12,16 @@ from grafo import Grafo
 from dijkstra import Dijkstra
 from visualizacao import VisualizadorGrafo
 from aplicacoes import AplicacoesDijkstra
-from mapa_real import MapaReal
+
+# Importação opcional do mapa real (pode não estar disponível em todos os ambientes)
+try:
+    from mapa_real import MapaReal
+    from streamlit_folium import st_folium
+    MAPA_REAL_DISPONIVEL = True
+except ImportError:
+    MAPA_REAL_DISPONIVEL = False
+    # Não mostra warning aqui para não poluir a interface
+
 import matplotlib
 matplotlib.use('Agg')  # Backend não-interativo para evitar problemas de display
 import matplotlib.pyplot as plt
@@ -20,7 +29,6 @@ import matplotlib.pyplot as plt
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans', 'Bitstream Vera Sans', 'sans-serif']
 plt.rcParams['axes.unicode_minus'] = False
-from streamlit_folium import st_folium
 
 # Configuração da página
 st.set_page_config(
@@ -102,22 +110,34 @@ if 'grafo' not in st.session_state or st.session_state.get('gerar_novo', False):
     st.session_state['gerar_novo'] = False
     st.rerun()
 
+# Inicializar mapa real apenas se disponível
+if MAPA_REAL_DISPONIVEL and 'mapa_real' not in st.session_state:
+    st.session_state['mapa_real'] = None
+
 grafo = st.session_state['grafo']
 dijkstra = st.session_state['dijkstra']
 visualizador = st.session_state['visualizador']
 aplicacoes = st.session_state['aplicacoes']
 
 # Abas com diferentes aplicações
-aba1, aba2, aba3, aba4, aba5, aba6, aba7, aba8 = st.tabs([
+abas_nomes = [
     "📍 Caminho Mínimo",
     "🌐 Roteamento de Redes",
     "⭐ Centralidade",
     "🚚 Logística",
     "👥 Redes Sociais",
     "💰 Otimização de Custos",
-    "📊 Análise de Conectividade",
-    "🗺️ Mapa Real - Maricá"
-])
+    "📊 Análise de Conectividade"
+]
+
+# Adiciona aba de mapa real apenas se disponível
+if MAPA_REAL_DISPONIVEL:
+    abas_nomes.append("🗺️ Mapa Real - Maricá")
+
+abas = st.tabs(abas_nomes)
+aba1, aba2, aba3, aba4, aba5, aba6, aba7 = abas[:7]
+if MAPA_REAL_DISPONIVEL:
+    aba8 = abas[7]
 
 # ============================================
 # ABA 1: CAMINHO MÍNIMO (Básico)
@@ -588,110 +608,126 @@ with aba7:
             plt.close(fig2)
 
 # ============================================
-# ABA 8: MAPA REAL DE MARICÁ
+# ABA 8: MAPA REAL DE MARICÁ (Opcional)
 # ============================================
-with aba8:
-    st.header("🗺️ Navegação em Maricá - Mapa Real")
-    st.markdown("""
-    Use endereços reais de Maricá para calcular o caminho mais rápido usando o algoritmo de Dijkstra.
-    O sistema carrega o mapa real da cidade do OpenStreetMap e calcula rotas baseadas nas ruas reais.
-    """)
-    
-    # Inicializar mapa real
-    if 'mapa_real' not in st.session_state:
-        with st.spinner("Carregando mapa de Maricá do OpenStreetMap... (pode levar alguns segundos)"):
-            mapa_real = MapaReal("Maricá, RJ, Brasil")
-            if mapa_real.carregar_mapa():
-                st.session_state['mapa_real'] = mapa_real
-                st.success("✅ Mapa carregado com sucesso!")
-            else:
-                st.error("❌ Erro ao carregar mapa. Verifique sua conexão com a internet.")
-                st.session_state['mapa_real'] = None
-    
-    if st.session_state.get('mapa_real'):
-        mapa_real = st.session_state['mapa_real']
-        
-        col1, col2 = st.columns([1, 1])
-        
-        with col1:
-            st.subheader("📍 Endereços")
-            
-            endereco_origem = st.text_input(
-                "Endereço de Origem",
-                placeholder="Ex: Praça Orlando de Barros Pimentel, Maricá",
-                key="mapa_origem"
-            )
-            
-            endereco_destino = st.text_input(
-                "Endereço de Destino",
-                placeholder="Ex: Praia de Itaipuaçu, Maricá",
-                key="mapa_destino"
-            )
-            
-            if st.button("🔍 Calcular Rota", type="primary", key="mapa_btn"):
-                if not endereco_origem or not endereco_destino:
-                    st.warning("Por favor, preencha ambos os endereços!")
-                else:
-                    with st.spinner("Geocodificando endereços e calculando rota..."):
-                        # Geocodificar origem
-                        coords_origem = mapa_real.geocodificar_endereco(endereco_origem)
-                        if not coords_origem:
-                            st.error(f"Não foi possível encontrar o endereço de origem: {endereco_origem}")
-                        else:
-                            mapa_real.coordenadas_origem = coords_origem
-                            no_origem = mapa_real.encontrar_no_mais_proximo(coords_origem[0], coords_origem[1])
-                            
-                            # Geocodificar destino
-                            coords_destino = mapa_real.geocodificar_endereco(endereco_destino)
-                            if not coords_destino:
-                                st.error(f"Não foi possível encontrar o endereço de destino: {endereco_destino}")
-                            else:
-                                mapa_real.coordenadas_destino = coords_destino
-                                no_destino = mapa_real.encontrar_no_mais_proximo(coords_destino[0], coords_destino[1])
-                                
-                                if no_origem and no_destino:
-                                    # Calcular rota com Dijkstra
-                                    caminho, distancia_metros = mapa_real.dijkstra_ruas(no_origem, no_destino)
-                                    
-                                    if caminho:
-                                        st.session_state['mapa_caminho'] = caminho
-                                        st.session_state['mapa_distancia'] = distancia_metros
-                                        st.session_state['mapa_no_origem'] = no_origem
-                                        st.session_state['mapa_no_destino'] = no_destino
-                                        st.success("✅ Rota calculada com sucesso!")
-                                        st.rerun()
-                                    else:
-                                        st.error("❌ Não foi possível encontrar uma rota entre os endereços.")
-                                else:
-                                    st.error("❌ Não foi possível encontrar os pontos no mapa.")
-            
-            # Mostrar resultados
-            if 'mapa_caminho' in st.session_state:
-                distancia_km = st.session_state['mapa_distancia'] / 1000
-                st.success(f"✅ Rota encontrada!")
-                st.metric("Distância Total", f"{distancia_km:.2f} km")
-                st.metric("Distância em Metros", f"{st.session_state['mapa_distancia']:.0f} m")
-                st.info(f"**Número de segmentos:** {len(st.session_state['mapa_caminho']) - 1}")
-        
-        with col2:
-            st.subheader("🗺️ Mapa Interativo")
-            
-            # Criar e exibir mapa
-            if 'mapa_caminho' in st.session_state:
-                mapa_folium = mapa_real.criar_mapa_folium(st.session_state['mapa_caminho'])
-            else:
-                mapa_folium = mapa_real.criar_mapa_folium()
-            
-            st_folium(mapa_folium, width=700, height=500)
-        
-        st.markdown("---")
-        st.info("""
-        **💡 Dicas:**
-        - Use endereços específicos de Maricá para melhores resultados
-        - Exemplos: "Praça Orlando de Barros Pimentel", "Praia de Itaipuaçu", "Centro, Maricá"
-        - O sistema usa dados do OpenStreetMap e calcula rotas baseadas nas ruas reais
-        - O algoritmo de Dijkstra próprio é aplicado no grafo de ruas da cidade
+if MAPA_REAL_DISPONIVEL:
+    with aba8:
+        st.header("🗺️ Navegação em Maricá - Mapa Real")
+        st.markdown("""
+        Use endereços reais de Maricá para calcular o caminho mais rápido usando o algoritmo de Dijkstra.
+        O sistema carrega o mapa real da cidade do OpenStreetMap e calcula rotas baseadas nas ruas reais.
         """)
+        
+        # Inicializar mapa real
+        if 'mapa_real' not in st.session_state:
+            with st.spinner("Carregando mapa de Maricá do OpenStreetMap... (pode levar alguns segundos)"):
+                mapa_real = MapaReal("Maricá, RJ, Brasil")
+                if mapa_real.carregar_mapa():
+                    st.session_state['mapa_real'] = mapa_real
+                    st.success("✅ Mapa carregado com sucesso!")
+                else:
+                    st.error("❌ Erro ao carregar mapa. Verifique sua conexão com a internet.")
+                    st.session_state['mapa_real'] = None
+        
+        if st.session_state.get('mapa_real'):
+            mapa_real = st.session_state['mapa_real']
+            
+            col1, col2 = st.columns([1, 1])
+            
+            with col1:
+                st.subheader("📍 Endereços")
+                
+                endereco_origem = st.text_input(
+                    "Endereço de Origem",
+                    placeholder="Ex: Praça Orlando de Barros Pimentel, Maricá",
+                    key="mapa_origem"
+                )
+                
+                endereco_destino = st.text_input(
+                    "Endereço de Destino",
+                    placeholder="Ex: Praia de Itaipuaçu, Maricá",
+                    key="mapa_destino"
+                )
+                
+                if st.button("🔍 Calcular Rota", type="primary", key="mapa_btn"):
+                    if not endereco_origem or not endereco_destino:
+                        st.warning("Por favor, preencha ambos os endereços!")
+                    else:
+                        with st.spinner("Geocodificando endereços e calculando rota..."):
+                            # Geocodificar origem
+                            coords_origem = mapa_real.geocodificar_endereco(endereco_origem)
+                            if not coords_origem:
+                                st.error(f"Não foi possível encontrar o endereço de origem: {endereco_origem}")
+                            else:
+                                mapa_real.coordenadas_origem = coords_origem
+                                no_origem = mapa_real.encontrar_no_mais_proximo(coords_origem[0], coords_origem[1])
+                                
+                                # Geocodificar destino
+                                coords_destino = mapa_real.geocodificar_endereco(endereco_destino)
+                                if not coords_destino:
+                                    st.error(f"Não foi possível encontrar o endereço de destino: {endereco_destino}")
+                                else:
+                                    mapa_real.coordenadas_destino = coords_destino
+                                    no_destino = mapa_real.encontrar_no_mais_proximo(coords_destino[0], coords_destino[1])
+                                    
+                                    if no_origem and no_destino:
+                                        # Calcular rota com Dijkstra
+                                        caminho, distancia_metros = mapa_real.dijkstra_ruas(no_origem, no_destino)
+                                        
+                                        if caminho:
+                                            st.session_state['mapa_caminho'] = caminho
+                                            st.session_state['mapa_distancia'] = distancia_metros
+                                            st.session_state['mapa_no_origem'] = no_origem
+                                            st.session_state['mapa_no_destino'] = no_destino
+                                            st.success("✅ Rota calculada com sucesso!")
+                                            st.rerun()
+                                        else:
+                                            st.error("❌ Não foi possível encontrar uma rota entre os endereços.")
+                                    else:
+                                        st.error("❌ Não foi possível encontrar os pontos no mapa.")
+                
+                # Mostrar resultados
+                if 'mapa_caminho' in st.session_state:
+                    distancia_km = st.session_state['mapa_distancia'] / 1000
+                    st.success(f"✅ Rota encontrada!")
+                    st.metric("Distância Total", f"{distancia_km:.2f} km")
+                    st.metric("Distância em Metros", f"{st.session_state['mapa_distancia']:.0f} m")
+                    st.info(f"**Número de segmentos:** {len(st.session_state['mapa_caminho']) - 1}")
+            
+            with col2:
+                st.subheader("🗺️ Mapa Interativo")
+                
+                # Criar e exibir mapa
+                if 'mapa_caminho' in st.session_state:
+                    mapa_folium = mapa_real.criar_mapa_folium(st.session_state['mapa_caminho'])
+                else:
+                    mapa_folium = mapa_real.criar_mapa_folium()
+                
+                st_folium(mapa_folium, width=700, height=500)
+            
+            st.markdown("---")
+            st.info("""
+            **💡 Dicas:**
+            - Use endereços específicos de Maricá para melhores resultados
+            - Exemplos: "Praça Orlando de Barros Pimentel", "Praia de Itaipuaçu", "Centro, Maricá"
+            - O sistema usa dados do OpenStreetMap e calcula rotas baseadas nas ruas reais
+            - O algoritmo de Dijkstra próprio é aplicado no grafo de ruas da cidade
+            """)
+else:
+    # Se mapa real não estiver disponível, mostra mensagem informativa
+    if MAPA_REAL_DISPONIVEL == False and len(abas) > 7:
+        with abas[7]:
+            st.header("🗺️ Mapa Real - Maricá")
+            st.info("""
+            **Funcionalidade de mapa real não está disponível neste ambiente.**
+            
+            Para habilitar esta funcionalidade, instale as dependências opcionais:
+            ```bash
+            pip install osmnx folium geopy pyproj
+            ```
+            
+            **Nota:** Esta funcionalidade requer dependências adicionais que podem não estar disponíveis em todos os ambientes de deploy.
+            """)
 
 # Rodapé
 st.markdown("---")
