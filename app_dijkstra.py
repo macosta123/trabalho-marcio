@@ -165,12 +165,14 @@ with aba1:
             
             if caminho is None:
                 st.error(f"❌ Não existe caminho entre o vértice {origem} e o vértice {destino}!")
+                # Limpa resultados anteriores se não há caminho
+                if 'aba1_caminho' in st.session_state:
+                    del st.session_state['aba1_caminho']
+                if 'aba1_distancia' in st.session_state:
+                    del st.session_state['aba1_distancia']
             else:
                 st.session_state['aba1_caminho'] = caminho
                 st.session_state['aba1_distancia'] = distancia
-                st.session_state['aba1_origem'] = origem
-                st.session_state['aba1_destino'] = destino
-                st.rerun()
         
         if 'aba1_caminho' in st.session_state:
             caminho = st.session_state['aba1_caminho']
@@ -183,8 +185,9 @@ with aba1:
     
     with col2:
         caminho_viz = st.session_state.get('aba1_caminho')
-        origem_viz = st.session_state.get('aba1_origem')
-        destino_viz = st.session_state.get('aba1_destino')
+        # Usa os valores do selectbox que já estão no session_state via key
+        origem_viz = st.session_state.get('aba1_origem', origem)
+        destino_viz = st.session_state.get('aba1_destino', destino)
         distancia_viz = st.session_state.get('aba1_distancia')
         
         fig, ax = plt.subplots(figsize=(10, 8))
@@ -229,7 +232,6 @@ with aba2:
         if st.button("📡 Calcular Rota", key="aba2_btn"):
             resultado = aplicacoes.roteamento_rede(roteador_origem, roteador_destino)
             st.session_state['aba2_resultado'] = resultado
-            st.rerun()
         
         if 'aba2_resultado' in st.session_state:
             resultado = st.session_state['aba2_resultado']
@@ -285,7 +287,6 @@ with aba3:
     if st.button("🔍 Encontrar Vértice Mais Central", key="aba3_btn"):
         resultado = aplicacoes.encontrar_vertice_mais_central()
         st.session_state['aba3_resultado'] = resultado
-        st.rerun()
     
     if 'aba3_resultado' in st.session_state:
         resultado = st.session_state['aba3_resultado']
@@ -346,7 +347,6 @@ with aba4:
         else:
             resultado = aplicacoes.planejamento_logistica(deposito, destinos)
             st.session_state['aba4_resultado'] = resultado
-            st.rerun()
     
     if 'aba4_resultado' in st.session_state:
         resultado = st.session_state['aba4_resultado']
@@ -408,7 +408,6 @@ with aba5:
         if st.button("🔗 Calcular Grau de Separação", key="aba5_btn"):
             resultado = aplicacoes.grau_separacao(pessoa1, pessoa2)
             st.session_state['aba5_resultado'] = resultado
-            st.rerun()
         
         if 'aba5_resultado' in st.session_state:
             resultado = st.session_state['aba5_resultado']
@@ -461,7 +460,6 @@ with aba6:
     if st.button("📈 Analisar Conectividade", key="aba7_btn"):
         resultado = aplicacoes.analisar_conectividade()
         st.session_state['aba7_resultado'] = resultado
-        st.rerun()
     
     if 'aba7_resultado' in st.session_state:
         resultado = st.session_state['aba7_resultado']
@@ -592,7 +590,6 @@ if MAPA_REAL_DISPONIVEL:
                                             st.session_state['mapa_no_origem'] = no_origem
                                             st.session_state['mapa_no_destino'] = no_destino
                                             st.success("✅ Rota calculada com sucesso!")
-                                            st.rerun()
                                         else:
                                             st.error("❌ Não foi possível encontrar uma rota entre os endereços.")
                                     else:
