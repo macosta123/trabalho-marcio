@@ -537,24 +537,55 @@ if MAPA_REAL_DISPONIVEL:
         
         # Inicializar mapa real
         if 'mapa_real' not in st.session_state:
-            with st.spinner("Carregando mapa de Maricá do OpenStreetMap... (pode levar alguns segundos)"):
+            with st.spinner("Carregando mapa de Maricá do OpenStreetMap... (pode levar 30-60 segundos)"):
                 try:
                     mapa_real = MapaReal("Maricá, RJ, Brasil")
                     if mapa_real.carregar_mapa():
-                        st.session_state['mapa_real'] = mapa_real
-                        st.success("✅ Mapa carregado com sucesso!")
+                        if mapa_real.grafo_ruas and len(mapa_real.grafo_ruas.nodes()) > 0:
+                            st.session_state['mapa_real'] = mapa_real
+                            num_nos = len(mapa_real.grafo_ruas.nodes())
+                            num_arestas = len(mapa_real.grafo_ruas.edges())
+                            st.success(f"✅ Mapa carregado com sucesso! ({num_nos} nós, {num_arestas} arestas)")
+                        else:
+                            st.warning("⚠️ Mapa carregado mas grafo está vazio. Criando mapa básico...")
+                            # Cria mapa mesmo sem grafo para permitir uso básico
+                            st.session_state['mapa_real'] = mapa_real
                     else:
-                        st.error("❌ Erro ao carregar mapa. Verifique sua conexão com a internet.")
-                        st.session_state['mapa_real'] = None
+                        st.error("❌ Erro ao carregar mapa do OpenStreetMap.")
+                        st.info("💡 Tentando criar mapa básico sem dados de ruas...")
+                        # Cria instância mesmo sem grafo para permitir uso básico
+                        mapa_real = MapaReal("Maricá, RJ, Brasil")
+                        st.session_state['mapa_real'] = mapa_real
+                        st.warning("⚠️ Mapa básico criado. Funcionalidade limitada (sem rotas de ruas).")
                 except Exception as e:
                     st.error(f"❌ Erro ao inicializar mapa: {str(e)}")
-                    with st.expander("🔍 Detalhes do erro"):
+                    with st.expander("🔍 Detalhes do erro (clique para ver)"):
                         import traceback
                         st.code(traceback.format_exc())
-                    st.session_state['mapa_real'] = None
-                    st.info("💡 O mapa pode não estar disponível neste ambiente. Verifique os logs para mais detalhes.")
+                    # Cria instância básica mesmo com erro para não quebrar a interface
+                    try:
+                        mapa_real = MapaReal("Maricá, RJ, Brasil")
+                        st.session_state['mapa_real'] = mapa_real
+                        st.warning("⚠️ Mapa básico criado. Funcionalidade limitada.")
+                    except:
+                        st.session_state['mapa_real'] = None
         
-        if st.session_state.get('mapa_real'):
+        # Mostra interface mesmo se mapa_real for None ou sem grafo
+        mapa_real = st.session_state.get('mapa_real')
+        
+        if mapa_real is None:
+            st.error("❌ Não foi possível inicializar o mapa.")
+            st.info("""
+            **💡 Soluções:**
+            1. Recarregue a página
+            2. Verifique sua conexão com a internet
+            3. No Streamlit Cloud, verifique os logs em "Manage app" → "Logs"
+            """)
+            if st.button("🔄 Tentar Novamente", key="retry_mapa"):
+                if 'mapa_real' in st.session_state:
+                    del st.session_state['mapa_real']
+                st.rerun()
+        else:
             mapa_real = st.session_state['mapa_real']
             
             col1, col2 = st.columns([1, 1])
@@ -624,9 +655,20 @@ if MAPA_REAL_DISPONIVEL:
                 # Criar e exibir mapa usando método mais simples e confiável
                 try:
                     # Verifica se temos um caminho para mostrar
+                    caminho_para_mostrar = None
                     if 'mapa_caminho' in st.session_state and st.session_state['mapa_caminho']:
-                        mapa_folium = mapa_real.criar_mapa_folium(st.session_state['mapa_caminho'])
-                    else:
+                        caminho_para_mostrar = st.session_state['mapa_caminho']
+                    
+                    # Cria o mapa
+                    mapa_folium = mapa_real.criar_mapa_folium(caminho_para_mostrar)
+                    
+                    # Se temos coordenadas mas não caminho (grafo não carregado), adiciona marcadores
+                    if not caminho_para_mostrar:
+                        if 'mapa_coords_origem' in st.session_state:
+                            mapa_real.coordenadas_origem = st.session_state['mapa_coords_origem']
+                        if 'mapa_coords_destino' in st.session_state:
+                            mapa_real.coordenadas_destino = st.session_state['mapa_coords_destino']
+                        # Recria o mapa com os marcadores
                         mapa_folium = mapa_real.criar_mapa_folium()
                     
                     # Verifica se o mapa foi criado
