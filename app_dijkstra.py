@@ -520,10 +520,10 @@ with aba6:
             plt.close(fig2)
 
 # ============================================
-# ABA 8: MAPA REAL DE MARICÁ (Opcional)
+# ABA 7: MAPA REAL DE MARICÁ (Opcional)
 # ============================================
 if MAPA_REAL_DISPONIVEL:
-    with aba8:
+    with aba7:
         st.header("🗺️ Navegação em Maricá - Mapa Real")
         st.markdown("""
         Use endereços reais de Maricá para calcular o caminho mais rápido usando o algoritmo de Dijkstra.
