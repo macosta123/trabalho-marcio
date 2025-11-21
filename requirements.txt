@@ -2,10 +2,12 @@
 networkx>=3.1
 matplotlib>=3.8.0
 streamlit>=1.39.0
-streamlit-folium>=0.20.0
 
 # Dependências para mapa real
 osmnx>=1.6.0
 folium>=0.15.1
 geopy>=2.4.1
 pyproj>=3.6.1
+
+# Opcional: streamlit-folium (não é mais necessário, mas pode ser útil)
+# streamlit-folium>=0.20.0
