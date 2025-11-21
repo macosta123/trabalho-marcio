@@ -9,5 +9,5 @@ folium>=0.15.1
 geopy>=2.4.1
 pyproj>=3.6.1
 
-# Opcional: streamlit-folium (não é mais necessário, mas pode ser útil)
-# streamlit-folium>=0.20.0
+# Dependência para exibição interativa do mapa
+streamlit-folium>=0.20.0
