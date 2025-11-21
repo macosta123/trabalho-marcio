@@ -15,7 +15,14 @@ from aplicacoes import AplicacoesDijkstra
 
 # Importação do mapa real
 from mapa_real import MapaReal
-from streamlit_folium import st_folium
+# Tenta importar streamlit-folium, mas não é obrigatório
+try:
+    from streamlit_folium import st_folium
+    ST_FOLIUM_DISPONIVEL = True
+except ImportError:
+    ST_FOLIUM_DISPONIVEL = False
+    st_folium = None
+
 MAPA_REAL_DISPONIVEL = True
 
 import matplotlib
@@ -614,7 +621,7 @@ if MAPA_REAL_DISPONIVEL:
             with col2:
                 st.subheader("🗺️ Mapa Interativo")
                 
-                # Criar e exibir mapa
+                # Criar e exibir mapa usando método mais simples e confiável
                 try:
                     # Verifica se temos um caminho para mostrar
                     if 'mapa_caminho' in st.session_state and st.session_state['mapa_caminho']:
@@ -626,62 +633,49 @@ if MAPA_REAL_DISPONIVEL:
                     if mapa_folium is None:
                         st.warning("⚠️ Não foi possível criar o mapa. Verifique se o mapa foi carregado corretamente.")
                     else:
-                        # Método 1: Tenta usar st_folium (melhor para interatividade)
-                        mapa_exibido = False
-                        try:
-                            st_folium(mapa_folium, width=700, height=500, returned_objects=[])
-                            mapa_exibido = True
-                        except Exception as e1:
-                            # Método 2: Fallback usando HTML direto com base64
-                            try:
-                                import base64
-                                import io
-                                
-                                # Salva o mapa em um buffer de memória
-                                html_buffer = io.StringIO()
-                                mapa_folium.save(html_buffer)
-                                html_content = html_buffer.getvalue()
-                                html_buffer.close()
-                                
-                                # Exibe usando st.components.v1.html
-                                st.components.v1.html(html_content, width=700, height=500, scrolling=False)
-                                mapa_exibido = True
-                                st.caption("ℹ️ Mapa exibido em modo estático (sem interatividade)")
-                            except Exception as e2:
-                                # Método 3: Fallback usando arquivo temporário
-                                try:
-                                    import tempfile
-                                    import os
-                                    
-                                    # Cria arquivo temporário
-                                    with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
-                                        mapa_folium.save(f.name)
-                                        html_file = f.name
-                                    
-                                    # Lê e exibe
-                                    with open(html_file, 'r', encoding='utf-8') as f:
-                                        html_content = f.read()
-                                    
-                                    st.components.v1.html(html_content, width=700, height=500, scrolling=False)
-                                    mapa_exibido = True
-                                    st.caption("ℹ️ Mapa exibido em modo estático")
-                                    
-                                    # Remove arquivo temporário
-                                    try:
-                                        os.unlink(html_file)
-                                    except:
-                                        pass
-                                except Exception as e3:
-                                    st.error(f"❌ Erro ao exibir mapa. Tente recarregar a página.")
-                                    with st.expander("🔍 Detalhes do erro"):
-                                        st.code(f"st_folium: {str(e1)}\n\nHTML buffer: {str(e2)}\n\nHTML file: {str(e3)}")
+                        # Método mais confiável: salvar em arquivo temporário e ler
+                        import tempfile
+                        import os
                         
+                        try:
+                            # Cria arquivo temporário
+                            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
+                                temp_file = f.name
+                            
+                            # Salva o mapa no arquivo temporário
+                            mapa_folium.save(temp_file)
+                            
+                            # Lê o conteúdo HTML
+                            with open(temp_file, 'r', encoding='utf-8') as f:
+                                html_content = f.read()
+                            
+                            # Remove arquivo temporário
+                            try:
+                                os.unlink(temp_file)
+                            except:
+                                pass
+                            
+                            # Verifica se o HTML foi gerado
+                            if html_content and len(html_content) > 100:
+                                # Exibe usando st.components.v1.html (método mais confiável)
+                                st.components.v1.html(html_content, width=700, height=500, scrolling=False)
+                                st.caption("ℹ️ Mapa interativo - você pode dar zoom e arrastar")
+                            else:
+                                st.error("❌ Erro: HTML do mapa está vazio ou inválido")
+                                st.info(f"Tamanho do HTML: {len(html_content) if html_content else 0} caracteres")
+                                
+                        except Exception as e_save:
+                            st.error(f"❌ Erro ao salvar mapa: {str(e_save)}")
+                            with st.expander("🔍 Detalhes do erro"):
+                                import traceback
+                                st.code(traceback.format_exc())
+                            
                 except Exception as e:
-                    st.error(f"❌ Erro ao criar mapa: {str(e)}")
-                    with st.expander("🔍 Detalhes do erro"):
+                    st.error(f"❌ Erro ao criar/exibir mapa: {str(e)}")
+                    with st.expander("🔍 Detalhes do erro (clique para ver)"):
                         import traceback
                         st.code(traceback.format_exc())
-                    st.info("💡 Verifique se todas as dependências estão instaladas: `pip install osmnx folium geopy pyproj streamlit-folium`")
+                    st.info("💡 Verifique se todas as dependências estão instaladas: `pip install osmnx folium geopy pyproj`")
             
             st.markdown("---")
             st.info("""
