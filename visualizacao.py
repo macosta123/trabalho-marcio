@@ -5,7 +5,13 @@ Módulo de Visualização do Grafo
 Usa NetworkX e matplotlib para exibir o grafo e o caminho mínimo
 """
 
+import matplotlib
+matplotlib.use('Agg')  # Backend não-interativo
 import matplotlib.pyplot as plt
+# Configurar matplotlib para evitar problemas de fontes
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans', 'Bitstream Vera Sans', 'sans-serif']
+plt.rcParams['axes.unicode_minus'] = False
 import networkx as nx
 from typing import List, Optional, Tuple
 from grafo import Grafo
@@ -163,6 +169,123 @@ class VisualizadorGrafo:
             plt.title(titulo_completo, fontsize=14, fontweight='bold')
             plt.axis('off')
             plt.tight_layout()
+    
+    def visualizar_multiplos_caminhos(
+        self,
+        caminhos: List[List[int]],
+        origem: Optional[int] = None,
+        destinos: Optional[List[int]] = None,
+        titulo: str = "Grafo com Múltiplos Caminhos",
+        ax: Optional[plt.Axes] = None,
+        fig: Optional[plt.Figure] = None
+    ) -> None:
+        """
+        Visualiza o grafo destacando múltiplos caminhos (útil para logística).
+        
+        Args:
+            caminhos: Lista de listas de vértices (cada lista é um caminho)
+            origem: Vértice de origem comum
+            destinos: Lista de vértices de destino
+            titulo: Título do gráfico
+            ax: Eixos matplotlib
+            fig: Figura matplotlib
+        """
+        if ax is None:
+            if fig is None:
+                fig = plt.figure(figsize=(12, 8))
+                ax = fig.add_subplot(111)
+            else:
+                fig.clear()
+                ax = fig.add_subplot(111)
+        
+        if len(self.nx_grafo.nodes()) == 0:
+            ax.text(0.5, 0.5, 'Grafo vazio', ha='center', va='center', transform=ax.transAxes)
+            return
+        
+        num_vertices = len(self.nx_grafo.nodes())
+        k_value = max(1.0, 3.0 / (num_vertices ** 0.5))
+        pos = nx.spring_layout(self.nx_grafo, k=k_value, iterations=50, seed=42)
+        
+        # Desenha todas as arestas (cinza claro)
+        nx.draw_networkx_edges(
+            self.nx_grafo,
+            pos,
+            edge_color='lightgray',
+            width=1,
+            alpha=0.3,
+            ax=ax
+        )
+        
+        # Desenha cada caminho com cor diferente
+        cores_caminhos = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray']
+        vertices_em_caminhos = set()
+        
+        for idx, caminho in enumerate(caminhos):
+            if len(caminho) > 1:
+                arestas_caminho = [
+                    (caminho[i], caminho[i + 1])
+                    for i in range(len(caminho) - 1)
+                ]
+                cor = cores_caminhos[idx % len(cores_caminhos)]
+                nx.draw_networkx_edges(
+                    self.nx_grafo,
+                    pos,
+                    edgelist=arestas_caminho,
+                    edge_color=cor,
+                    width=3,
+                    alpha=0.7,
+                    style='dashed',
+                    ax=ax
+                )
+                vertices_em_caminhos.update(caminho)
+        
+        # Desenha vértices
+        cores_vertices = []
+        for v in self.nx_grafo.nodes():
+            if v == origem:
+                cores_vertices.append('green')
+            elif destinos and v in destinos:
+                cores_vertices.append('red')
+            elif v in vertices_em_caminhos:
+                cores_vertices.append('lightblue')
+            else:
+                cores_vertices.append('lightgray')
+        
+        nx.draw_networkx_nodes(
+            self.nx_grafo,
+            pos,
+            node_color=cores_vertices,
+            node_size=500,
+            alpha=0.9,
+            ax=ax
+        )
+        
+        # Labels
+        labels = {v: str(v) for v in self.nx_grafo.nodes()}
+        nx.draw_networkx_labels(
+            self.nx_grafo,
+            pos,
+            labels,
+            font_size=10,
+            font_weight='bold',
+            ax=ax
+        )
+        
+        # Labels dos pesos
+        edge_labels = {}
+        for (v1, v2), peso in self.grafo.arestas.items():
+            edge_labels[(v1, v2)] = str(peso)
+        
+        nx.draw_networkx_edge_labels(
+            self.nx_grafo,
+            pos,
+            edge_labels,
+            font_size=8,
+            ax=ax
+        )
+        
+        ax.set_title(titulo, fontsize=14, fontweight='bold')
+        ax.axis('off')
     
     def salvar_grafico(self, caminho_arquivo: str, caminho_minimo: Optional[List[int]] = None,
                       origem: Optional[int] = None, destino: Optional[int] = None,

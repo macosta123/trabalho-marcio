@@ -12,7 +12,15 @@ from grafo import Grafo
 from dijkstra import Dijkstra
 from visualizacao import VisualizadorGrafo
 from aplicacoes import AplicacoesDijkstra
+from mapa_real import MapaReal
+import matplotlib
+matplotlib.use('Agg')  # Backend não-interativo para evitar problemas de display
 import matplotlib.pyplot as plt
+# Configurar matplotlib para evitar problemas de fontes
+plt.rcParams['font.family'] = 'sans-serif'
+plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans', 'Bitstream Vera Sans', 'sans-serif']
+plt.rcParams['axes.unicode_minus'] = False
+from streamlit_folium import st_folium
 
 # Configuração da página
 st.set_page_config(
@@ -100,14 +108,15 @@ visualizador = st.session_state['visualizador']
 aplicacoes = st.session_state['aplicacoes']
 
 # Abas com diferentes aplicações
-aba1, aba2, aba3, aba4, aba5, aba6, aba7 = st.tabs([
+aba1, aba2, aba3, aba4, aba5, aba6, aba7, aba8 = st.tabs([
     "📍 Caminho Mínimo",
     "🌐 Roteamento de Redes",
     "⭐ Centralidade",
     "🚚 Logística",
     "👥 Redes Sociais",
     "💰 Otimização de Custos",
-    "📊 Análise de Conectividade"
+    "📊 Análise de Conectividade",
+    "🗺️ Mapa Real - Maricá"
 ])
 
 # ============================================
@@ -225,9 +234,10 @@ with aba2:
                 st.error(resultado['mensagem'])
     
     with col2:
+        st.write("**Visualização:**")
+        fig, ax = plt.subplots(figsize=(10, 8))
         if 'aba2_resultado' in st.session_state and st.session_state['aba2_resultado']['sucesso']:
             resultado = st.session_state['aba2_resultado']
-            fig, ax = plt.subplots(figsize=(10, 8))
             visualizador.visualizar_grafo(
                 caminho_minimo=resultado['caminho'],
                 origem=roteador_origem,
@@ -237,8 +247,18 @@ with aba2:
                 ax=ax,
                 fig=fig
             )
-            st.pyplot(fig)
-            plt.close(fig)
+        else:
+            visualizador.visualizar_grafo(
+                caminho_minimo=None,
+                origem=roteador_origem,
+                destino=roteador_destino,
+                distancia_total=None,
+                titulo="Roteamento de Rede\n(Selecione origem e destino)",
+                ax=ax,
+                fig=fig
+            )
+        st.pyplot(fig)
+        plt.close(fig)
 
 # ============================================
 # ABA 3: CENTRALIDADE
@@ -332,12 +352,12 @@ with aba4:
         with col2:
             # Visualizar todas as rotas
             fig, ax = plt.subplots(figsize=(10, 8))
-            visualizador.visualizar_grafo(
-                caminho_minimo=None,
+            caminhos = [info['caminho'] for info in resultado['rotas'].values()]
+            visualizador.visualizar_multiplos_caminhos(
+                caminhos=caminhos,
                 origem=deposito,
-                destino=None,
-                distancia_total=None,
-                titulo="Planejamento de Logística",
+                destinos=destinos,
+                titulo=f"Planejamento de Logística\nCusto Total: {resultado['custo_total']}",
                 ax=ax,
                 fig=fig
             )
@@ -390,9 +410,10 @@ with aba5:
                 st.error(resultado['mensagem'])
     
     with col2:
+        st.write("**Visualização:**")
+        fig, ax = plt.subplots(figsize=(10, 8))
         if 'aba5_resultado' in st.session_state and st.session_state['aba5_resultado']['conectadas']:
             resultado = st.session_state['aba5_resultado']
-            fig, ax = plt.subplots(figsize=(10, 8))
             visualizador.visualizar_grafo(
                 caminho_minimo=resultado['caminho'],
                 origem=pessoa1,
@@ -402,8 +423,18 @@ with aba5:
                 ax=ax,
                 fig=fig
             )
-            st.pyplot(fig)
-            plt.close(fig)
+        else:
+            visualizador.visualizar_grafo(
+                caminho_minimo=None,
+                origem=pessoa1,
+                destino=pessoa2,
+                distancia_total=None,
+                titulo="Rede Social\n(Selecione duas pessoas)",
+                ax=ax,
+                fig=fig
+            )
+        st.pyplot(fig)
+        plt.close(fig)
 
 # ============================================
 # ABA 6: OTIMIZAÇÃO DE CUSTOS
@@ -453,6 +484,40 @@ with aba6:
         with st.expander("📋 Distâncias para todos os vértices"):
             for vertice, custo in sorted(resultado['distancias'].items()):
                 st.write(f"Vértice {vertice}: {custo}")
+        
+        # Adicionar visualização
+        col_viz1, col_viz2 = st.columns([1, 1])
+        
+        with col_viz1:
+            st.write("**Visualização do grafo:**")
+            fig, ax = plt.subplots(figsize=(10, 8))
+            visualizador.visualizar_grafo(
+                caminho_minimo=None,
+                origem=origem,
+                destino=None,
+                distancia_total=None,
+                titulo=f"Otimização de Custos\nOrigem: {origem}",
+                ax=ax,
+                fig=fig
+            )
+            st.pyplot(fig)
+            plt.close(fig)
+        
+        with col_viz2:
+            st.write("**Distribuição de custos:**")
+            # Criar gráfico de barras com os custos
+            vertices_list = sorted(resultado['distancias'].keys())
+            custos_list = [resultado['distancias'][v] for v in vertices_list]
+            
+            fig2, ax2 = plt.subplots(figsize=(10, 6))
+            ax2.bar(vertices_list, custos_list, color='steelblue', alpha=0.7)
+            ax2.set_xlabel('Vértice')
+            ax2.set_ylabel('Custo')
+            ax2.set_title('Custos por Vértice')
+            ax2.grid(True, alpha=0.3)
+            plt.tight_layout()
+            st.pyplot(fig2)
+            plt.close(fig2)
 
 # ============================================
 # ABA 7: ANÁLISE DE CONECTIVIDADE
@@ -483,11 +548,150 @@ with aba7:
         with col4:
             st.metric("Distância Máxima", resultado['distancia_maxima'])
         
-        st.write("**Métricas por vértice:**")
-        ranking = sorted(resultado['distancias_por_vertice'].items(), key=lambda x: x[1]['soma'])
+        col_met1, col_met2 = st.columns([1, 1])
         
-        for vertice, metricas in ranking[:10]:
-            st.write(f"**Vértice {vertice}:** Soma={metricas['soma']}, Média={metricas['media']:.2f}, Máxima={metricas['maxima']}")
+        with col_met1:
+            st.write("**Métricas por vértice:**")
+            ranking = sorted(resultado['distancias_por_vertice'].items(), key=lambda x: x[1]['soma'])
+            
+            for vertice, metricas in ranking[:10]:
+                st.write(f"**Vértice {vertice}:** Soma={metricas['soma']}, Média={metricas['media']:.2f}, Máxima={metricas['maxima']}")
+        
+        with col_met2:
+            st.write("**Visualização do grafo:**")
+            fig, ax = plt.subplots(figsize=(10, 8))
+            visualizador.visualizar_grafo(
+                caminho_minimo=None,
+                origem=None,
+                destino=None,
+                distancia_total=None,
+                titulo=f"Análise de Conectividade\nDiâmetro: {resultado['diametro']}, Raio: {resultado['raio']}",
+                ax=ax,
+                fig=fig
+            )
+            st.pyplot(fig)
+            plt.close(fig)
+            
+            # Gráfico de barras com soma de distâncias
+            st.write("**Soma de distâncias por vértice:**")
+            vertices_list = [v for v, _ in ranking[:10]]
+            somas_list = [m['soma'] for _, m in ranking[:10]]
+            
+            fig2, ax2 = plt.subplots(figsize=(10, 6))
+            ax2.bar(vertices_list, somas_list, color='coral', alpha=0.7)
+            ax2.set_xlabel('Vértice')
+            ax2.set_ylabel('Soma de Distâncias')
+            ax2.set_title('Centralidade (menor = mais central)')
+            ax2.grid(True, alpha=0.3)
+            plt.tight_layout()
+            st.pyplot(fig2)
+            plt.close(fig2)
+
+# ============================================
+# ABA 8: MAPA REAL DE MARICÁ
+# ============================================
+with aba8:
+    st.header("🗺️ Navegação em Maricá - Mapa Real")
+    st.markdown("""
+    Use endereços reais de Maricá para calcular o caminho mais rápido usando o algoritmo de Dijkstra.
+    O sistema carrega o mapa real da cidade do OpenStreetMap e calcula rotas baseadas nas ruas reais.
+    """)
+    
+    # Inicializar mapa real
+    if 'mapa_real' not in st.session_state:
+        with st.spinner("Carregando mapa de Maricá do OpenStreetMap... (pode levar alguns segundos)"):
+            mapa_real = MapaReal("Maricá, RJ, Brasil")
+            if mapa_real.carregar_mapa():
+                st.session_state['mapa_real'] = mapa_real
+                st.success("✅ Mapa carregado com sucesso!")
+            else:
+                st.error("❌ Erro ao carregar mapa. Verifique sua conexão com a internet.")
+                st.session_state['mapa_real'] = None
+    
+    if st.session_state.get('mapa_real'):
+        mapa_real = st.session_state['mapa_real']
+        
+        col1, col2 = st.columns([1, 1])
+        
+        with col1:
+            st.subheader("📍 Endereços")
+            
+            endereco_origem = st.text_input(
+                "Endereço de Origem",
+                placeholder="Ex: Praça Orlando de Barros Pimentel, Maricá",
+                key="mapa_origem"
+            )
+            
+            endereco_destino = st.text_input(
+                "Endereço de Destino",
+                placeholder="Ex: Praia de Itaipuaçu, Maricá",
+                key="mapa_destino"
+            )
+            
+            if st.button("🔍 Calcular Rota", type="primary", key="mapa_btn"):
+                if not endereco_origem or not endereco_destino:
+                    st.warning("Por favor, preencha ambos os endereços!")
+                else:
+                    with st.spinner("Geocodificando endereços e calculando rota..."):
+                        # Geocodificar origem
+                        coords_origem = mapa_real.geocodificar_endereco(endereco_origem)
+                        if not coords_origem:
+                            st.error(f"Não foi possível encontrar o endereço de origem: {endereco_origem}")
+                        else:
+                            mapa_real.coordenadas_origem = coords_origem
+                            no_origem = mapa_real.encontrar_no_mais_proximo(coords_origem[0], coords_origem[1])
+                            
+                            # Geocodificar destino
+                            coords_destino = mapa_real.geocodificar_endereco(endereco_destino)
+                            if not coords_destino:
+                                st.error(f"Não foi possível encontrar o endereço de destino: {endereco_destino}")
+                            else:
+                                mapa_real.coordenadas_destino = coords_destino
+                                no_destino = mapa_real.encontrar_no_mais_proximo(coords_destino[0], coords_destino[1])
+                                
+                                if no_origem and no_destino:
+                                    # Calcular rota com Dijkstra
+                                    caminho, distancia_metros = mapa_real.dijkstra_ruas(no_origem, no_destino)
+                                    
+                                    if caminho:
+                                        st.session_state['mapa_caminho'] = caminho
+                                        st.session_state['mapa_distancia'] = distancia_metros
+                                        st.session_state['mapa_no_origem'] = no_origem
+                                        st.session_state['mapa_no_destino'] = no_destino
+                                        st.success("✅ Rota calculada com sucesso!")
+                                        st.rerun()
+                                    else:
+                                        st.error("❌ Não foi possível encontrar uma rota entre os endereços.")
+                                else:
+                                    st.error("❌ Não foi possível encontrar os pontos no mapa.")
+            
+            # Mostrar resultados
+            if 'mapa_caminho' in st.session_state:
+                distancia_km = st.session_state['mapa_distancia'] / 1000
+                st.success(f"✅ Rota encontrada!")
+                st.metric("Distância Total", f"{distancia_km:.2f} km")
+                st.metric("Distância em Metros", f"{st.session_state['mapa_distancia']:.0f} m")
+                st.info(f"**Número de segmentos:** {len(st.session_state['mapa_caminho']) - 1}")
+        
+        with col2:
+            st.subheader("🗺️ Mapa Interativo")
+            
+            # Criar e exibir mapa
+            if 'mapa_caminho' in st.session_state:
+                mapa_folium = mapa_real.criar_mapa_folium(st.session_state['mapa_caminho'])
+            else:
+                mapa_folium = mapa_real.criar_mapa_folium()
+            
+            st_folium(mapa_folium, width=700, height=500)
+        
+        st.markdown("---")
+        st.info("""
+        **💡 Dicas:**
+        - Use endereços específicos de Maricá para melhores resultados
+        - Exemplos: "Praça Orlando de Barros Pimentel", "Praia de Itaipuaçu", "Centro, Maricá"
+        - O sistema usa dados do OpenStreetMap e calcula rotas baseadas nas ruas reais
+        - O algoritmo de Dijkstra próprio é aplicado no grafo de ruas da cidade
+        """)
 
 # Rodapé
 st.markdown("---")
