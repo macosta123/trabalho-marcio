@@ -627,8 +627,8 @@ if MAPA_REAL_DISPONIVEL:
             """)
 else:
     # Se mapa real não estiver disponível, mostra mensagem informativa
-    if MAPA_REAL_DISPONIVEL == False and len(abas) > 7:
-        with abas[7]:
+    if MAPA_REAL_DISPONIVEL == False and len(abas) > 6:
+        with abas[6]:
             st.header("🗺️ Mapa Real - Maricá")
             st.info("""
             **Funcionalidade de mapa real não está disponível neste ambiente.**
