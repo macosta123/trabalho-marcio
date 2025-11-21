@@ -122,7 +122,6 @@ abas_nomes = [
     "⭐ Centralidade",
     "🚚 Logística",
     "👥 Redes Sociais",
-    "💰 Otimização de Custos",
     "📊 Análise de Conectividade"
 ]
 
@@ -131,9 +130,9 @@ if MAPA_REAL_DISPONIVEL:
     abas_nomes.append("🗺️ Mapa Real - Maricá")
 
 abas = st.tabs(abas_nomes)
-aba1, aba2, aba3, aba4, aba5, aba6, aba7 = abas[:7]
+aba1, aba2, aba3, aba4, aba5, aba6 = abas[:6]
 if MAPA_REAL_DISPONIVEL:
-    aba8 = abas[7]
+    aba7 = abas[6]
 
 # ============================================
 # ABA 1: CAMINHO MÍNIMO (Básico)
@@ -453,123 +452,9 @@ with aba5:
         plt.close(fig)
 
 # ============================================
-# ABA 6: OTIMIZAÇÃO DE CUSTOS
+# ABA 6: ANÁLISE DE CONECTIVIDADE
 # ============================================
 with aba6:
-    st.header("💰 Otimização de Custos")
-    st.markdown("Calcula o custo mínimo para alcançar todos os vértices a partir de uma origem.")
-    
-    vertices_disponiveis = list(range(grafo.num_vertices))
-    
-    origem = st.selectbox(
-        "Vértice de Origem",
-        options=vertices_disponiveis,
-        index=0,
-        key="aba6_origem"
-    )
-    
-    if st.button("💵 Calcular Custos", key="aba6_btn"):
-        resultado = aplicacoes.otimizar_custos(origem)
-        st.session_state['aba6_resultado'] = resultado
-        st.rerun()
-    
-    if 'aba6_resultado' in st.session_state:
-        resultado = st.session_state['aba6_resultado']
-        
-        col1, col2, col3 = st.columns(3)
-        
-        with col1:
-            st.metric("Custo Total", resultado['custo_total'])
-        
-        with col2:
-            st.metric("Vértices Alcançáveis", resultado['vertices_alcancaveis'])
-        
-        with col3:
-            st.metric("Custo Médio", f"{resultado['custo_medio']:.2f}")
-        
-        col_info1, col_info2 = st.columns(2)
-        
-        with col_info1:
-            st.write("**Vértice mais distante:**")
-            st.info(f"Vértice {resultado['mais_distante']['vertice']}: {resultado['mais_distante']['custo']}")
-        
-        with col_info2:
-            st.write("**Vértice mais próximo:**")
-            st.info(f"Vértice {resultado['mais_proximo']['vertice']}: {resultado['mais_proximo']['custo']}")
-        
-        with st.expander("📋 Distâncias para todos os vértices"):
-            for vertice, custo in sorted(resultado['distancias'].items()):
-                st.write(f"Vértice {vertice}: {custo}")
-        
-        # Adicionar visualização
-        col_viz1, col_viz2 = st.columns([1, 1])
-        
-        with col_viz1:
-            st.write("**Visualização do grafo com caminhos mínimos:**")
-            
-            # Obter todos os caminhos para visualização
-            caminhos_para_viz = []
-            if 'caminhos' in resultado and resultado['caminhos']:
-                caminhos_para_viz = list(resultado['caminhos'].values())
-            
-            # Se temos caminhos, mostra todos
-            if caminhos_para_viz:
-                fig, ax = plt.subplots(figsize=(10, 8))
-                destinos_list = list(resultado['distancias'].keys())
-                visualizador.visualizar_multiplos_caminhos(
-                    caminhos=caminhos_para_viz,
-                    origem=origem,
-                    destinos=destinos_list,
-                    titulo=f"Otimização de Custos\nOrigem: {origem} | Custo Total: {resultado['custo_total']}",
-                    ax=ax,
-                    fig=fig
-                )
-                st.caption(f"Mostrando {len(caminhos_para_viz)} caminhos mínimos da origem para todos os vértices alcançáveis.")
-            else:
-                # Fallback: mostra apenas o grafo
-                fig, ax = plt.subplots(figsize=(10, 8))
-                visualizador.visualizar_grafo(
-                    caminho_minimo=None,
-                    origem=origem,
-                    destino=None,
-                    distancia_total=None,
-                    titulo=f"Otimização de Custos\nOrigem: {origem}",
-                    ax=ax,
-                    fig=fig
-                )
-                st.caption("Grafo completo (caminhos serão calculados ao clicar em 'Calcular Custos')")
-            st.pyplot(fig)
-            plt.close(fig)
-        
-        with col_viz2:
-            st.write("**Distribuição de custos:**")
-            # Criar gráfico de barras com os custos
-            vertices_list = sorted(resultado['distancias'].keys())
-            custos_list = [resultado['distancias'][v] for v in vertices_list]
-            
-            fig2, ax2 = plt.subplots(figsize=(10, 6))
-            ax2.bar(vertices_list, custos_list, color='steelblue', alpha=0.7)
-            ax2.set_xlabel('Vértice')
-            ax2.set_ylabel('Custo')
-            ax2.set_title('Custos por Vértice')
-            ax2.grid(True, alpha=0.3)
-            plt.tight_layout()
-            st.pyplot(fig2)
-            plt.close(fig2)
-            
-            # Mostrar alguns caminhos como exemplo
-            if 'caminhos' in resultado and resultado['caminhos']:
-                st.write("**Exemplos de caminhos mínimos:**")
-                caminhos_exemplo = list(resultado['caminhos'].items())[:5]
-                for destino, caminho in caminhos_exemplo:
-                    caminho_str = " → ".join(str(v) for v in caminho)
-                    custo = resultado['distancias'][destino]
-                    st.caption(f"Para vértice {destino}: {caminho_str} (Custo: {custo})")
-
-# ============================================
-# ABA 7: ANÁLISE DE CONECTIVIDADE
-# ============================================
-with aba7:
     st.header("📊 Análise de Conectividade")
     st.markdown("Analisa métricas globais de conectividade do grafo: diâmetro, raio, distâncias médias, etc.")
     
