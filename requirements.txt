@@ -4,9 +4,8 @@ matplotlib>=3.8.0
 streamlit>=1.39.0
 streamlit-folium>=0.20.0
 
-# Dependências para mapa real (opcional - pode falhar em alguns ambientes)
-# Descomente se precisar da funcionalidade de mapa real
-# osmnx>=1.6.0
-# folium>=0.15.1
-# geopy>=2.4.1
-# pyproj>=3.6.1
+# Dependências para mapa real
+osmnx>=1.6.0
+folium>=0.15.1
+geopy>=2.4.1
+pyproj>=3.6.1

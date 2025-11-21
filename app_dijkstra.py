@@ -13,14 +13,10 @@ from dijkstra import Dijkstra
 from visualizacao import VisualizadorGrafo
 from aplicacoes import AplicacoesDijkstra
 
-# Importação opcional do mapa real (pode não estar disponível em todos os ambientes)
-try:
-    from mapa_real import MapaReal
-    from streamlit_folium import st_folium
-    MAPA_REAL_DISPONIVEL = True
-except ImportError:
-    MAPA_REAL_DISPONIVEL = False
-    # Não mostra warning aqui para não poluir a interface
+# Importação do mapa real
+from mapa_real import MapaReal
+from streamlit_folium import st_folium
+MAPA_REAL_DISPONIVEL = True
 
 import matplotlib
 matplotlib.use('Agg')  # Backend não-interativo para evitar problemas de display
@@ -110,7 +106,7 @@ if 'grafo' not in st.session_state or st.session_state.get('gerar_novo', False):
     st.session_state['gerar_novo'] = False
     st.rerun()
 
-# Inicializar mapa real apenas se disponível
+# Inicializar mapa real
 if MAPA_REAL_DISPONIVEL and 'mapa_real' not in st.session_state:
     st.session_state['mapa_real'] = None
 

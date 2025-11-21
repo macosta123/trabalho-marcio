@@ -168,19 +168,37 @@ class MapaReal:
                 if vizinho in visitados:
                     continue
                 
-                # Calcula distância real entre nós
+                # Obtém o comprimento da aresta do OSMnx (já está em metros)
                 try:
-                    # Pega coordenadas dos nós (OSMnx usa 'y' para lat e 'x' para lon)
-                    lat1 = self.grafo_ruas.nodes[no_atual].get('y')
-                    lon1 = self.grafo_ruas.nodes[no_atual].get('x')
-                    lat2 = self.grafo_ruas.nodes[vizinho].get('y')
-                    lon2 = self.grafo_ruas.nodes[vizinho].get('x')
-                    
-                    if lat1 is None or lon1 is None or lat2 is None or lon2 is None:
-                        continue
-                    
-                    # Calcula distância em metros usando geodésica
-                    distancia = geodesic((lat1, lon1), (lat2, lon2)).meters
+                    # Tenta pegar o comprimento da aresta diretamente
+                    aresta_data = self.grafo_ruas.get_edge_data(no_atual, vizinho)
+                    if aresta_data:
+                        # Pega o primeiro edge (pode haver múltiplos)
+                        primeiro_edge = list(aresta_data.values())[0]
+                        distancia = primeiro_edge.get('length', 0)
+                        
+                        # Se não tiver 'length', calcula geodésica
+                        if distancia == 0 or distancia is None:
+                            lat1 = self.grafo_ruas.nodes[no_atual].get('y')
+                            lon1 = self.grafo_ruas.nodes[no_atual].get('x')
+                            lat2 = self.grafo_ruas.nodes[vizinho].get('y')
+                            lon2 = self.grafo_ruas.nodes[vizinho].get('x')
+                            
+                            if lat1 and lon1 and lat2 and lon2:
+                                distancia = geodesic((lat1, lon1), (lat2, lon2)).meters
+                            else:
+                                continue
+                    else:
+                        # Fallback: calcula geodésica
+                        lat1 = self.grafo_ruas.nodes[no_atual].get('y')
+                        lon1 = self.grafo_ruas.nodes[no_atual].get('x')
+                        lat2 = self.grafo_ruas.nodes[vizinho].get('y')
+                        lon2 = self.grafo_ruas.nodes[vizinho].get('x')
+                        
+                        if lat1 and lon1 and lat2 and lon2:
+                            distancia = geodesic((lat1, lon1), (lat2, lon2)).meters
+                        else:
+                            continue
                     
                     nova_distancia = dist_atual + distancia
                     
@@ -188,8 +206,24 @@ class MapaReal:
                         distancias[vizinho] = nova_distancia
                         predecessores[vizinho] = no_atual
                         heapq.heappush(fila, (nova_distancia, vizinho))
-                except Exception:
-                    continue
+                except Exception as e:
+                    # Em caso de erro, tenta calcular geodésica
+                    try:
+                        lat1 = self.grafo_ruas.nodes[no_atual].get('y')
+                        lon1 = self.grafo_ruas.nodes[no_atual].get('x')
+                        lat2 = self.grafo_ruas.nodes[vizinho].get('y')
+                        lon2 = self.grafo_ruas.nodes[vizinho].get('x')
+                        
+                        if lat1 and lon1 and lat2 and lon2:
+                            distancia = geodesic((lat1, lon1), (lat2, lon2)).meters
+                            nova_distancia = dist_atual + distancia
+                            
+                            if nova_distancia < distancias[vizinho]:
+                                distancias[vizinho] = nova_distancia
+                                predecessores[vizinho] = no_atual
+                                heapq.heappush(fila, (nova_distancia, vizinho))
+                    except Exception:
+                        continue
         
         # Reconstruir caminho
         if distancias[destino] == float('inf'):
