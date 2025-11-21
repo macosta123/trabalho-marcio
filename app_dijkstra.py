@@ -505,17 +505,39 @@ with aba6:
         col_viz1, col_viz2 = st.columns([1, 1])
         
         with col_viz1:
-            st.write("**Visualização do grafo:**")
-            fig, ax = plt.subplots(figsize=(10, 8))
-            visualizador.visualizar_grafo(
-                caminho_minimo=None,
-                origem=origem,
-                destino=None,
-                distancia_total=None,
-                titulo=f"Otimização de Custos\nOrigem: {origem}",
-                ax=ax,
-                fig=fig
-            )
+            st.write("**Visualização do grafo com caminhos mínimos:**")
+            
+            # Obter todos os caminhos para visualização
+            caminhos_para_viz = []
+            if 'caminhos' in resultado and resultado['caminhos']:
+                caminhos_para_viz = list(resultado['caminhos'].values())
+            
+            # Se temos caminhos, mostra todos
+            if caminhos_para_viz:
+                fig, ax = plt.subplots(figsize=(10, 8))
+                destinos_list = list(resultado['distancias'].keys())
+                visualizador.visualizar_multiplos_caminhos(
+                    caminhos=caminhos_para_viz,
+                    origem=origem,
+                    destinos=destinos_list,
+                    titulo=f"Otimização de Custos\nOrigem: {origem} | Custo Total: {resultado['custo_total']}",
+                    ax=ax,
+                    fig=fig
+                )
+                st.caption(f"Mostrando {len(caminhos_para_viz)} caminhos mínimos da origem para todos os vértices alcançáveis.")
+            else:
+                # Fallback: mostra apenas o grafo
+                fig, ax = plt.subplots(figsize=(10, 8))
+                visualizador.visualizar_grafo(
+                    caminho_minimo=None,
+                    origem=origem,
+                    destino=None,
+                    distancia_total=None,
+                    titulo=f"Otimização de Custos\nOrigem: {origem}",
+                    ax=ax,
+                    fig=fig
+                )
+                st.caption("Grafo completo (caminhos serão calculados ao clicar em 'Calcular Custos')")
             st.pyplot(fig)
             plt.close(fig)
         
@@ -534,6 +556,15 @@ with aba6:
             plt.tight_layout()
             st.pyplot(fig2)
             plt.close(fig2)
+            
+            # Mostrar alguns caminhos como exemplo
+            if 'caminhos' in resultado and resultado['caminhos']:
+                st.write("**Exemplos de caminhos mínimos:**")
+                caminhos_exemplo = list(resultado['caminhos'].items())[:5]
+                for destino, caminho in caminhos_exemplo:
+                    caminho_str = " → ".join(str(v) for v in caminho)
+                    custo = resultado['distancias'][destino]
+                    st.caption(f"Para vértice {destino}: {caminho_str} (Custo: {custo})")
 
 # ============================================
 # ABA 7: ANÁLISE DE CONECTIVIDADE

@@ -180,7 +180,7 @@ class AplicacoesDijkstra:
             origem: Vértice de origem
             
         Returns:
-            Dicionário com análise de custos
+            Dicionário com análise de custos e caminhos
         """
         distancias = self.dijkstra.obter_distancias_minimas(origem)
         
@@ -189,7 +189,8 @@ class AplicacoesDijkstra:
                 'origem': origem,
                 'custo_total': 0,
                 'vertices_alcancaveis': 0,
-                'distancias': {}
+                'distancias': {},
+                'caminhos': {}
             }
         
         custo_total = sum(distancias.values())
@@ -198,6 +199,14 @@ class AplicacoesDijkstra:
         # Encontrar vértice mais distante e mais próximo
         mais_distante = max(distancias.items(), key=lambda x: x[1])
         mais_proximo = min((k, v) for k, v in distancias.items() if k != origem)
+        
+        # Calcular caminhos mínimos para todos os vértices alcançáveis
+        caminhos = {}
+        for destino in distancias.keys():
+            if destino != origem:
+                caminho, _ = self.dijkstra.encontrar_caminho_minimo(origem, destino)
+                if caminho:
+                    caminhos[destino] = caminho
         
         return {
             'origem': origem,
@@ -212,7 +221,8 @@ class AplicacoesDijkstra:
                 'vertice': mais_proximo[0],
                 'custo': mais_proximo[1]
             },
-            'distancias': distancias
+            'distancias': distancias,
+            'caminhos': caminhos
         }
     
     # ============================================

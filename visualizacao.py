@@ -220,7 +220,33 @@ class VisualizadorGrafo:
         cores_caminhos = ['blue', 'red', 'green', 'orange', 'purple', 'brown', 'pink', 'gray']
         vertices_em_caminhos = set()
         
+        # Coletar todas as arestas únicas dos caminhos para evitar sobreposição
+        arestas_unicas = set()
         for idx, caminho in enumerate(caminhos):
+            if len(caminho) > 1:
+                for i in range(len(caminho) - 1):
+                    # Normaliza aresta (sempre menor -> maior)
+                    aresta = (min(caminho[i], caminho[i + 1]), max(caminho[i], caminho[i + 1]))
+                    arestas_unicas.add(aresta)
+                vertices_em_caminhos.update(caminho)
+        
+        # Desenha todas as arestas dos caminhos de uma vez (mais eficiente)
+        if arestas_unicas:
+            # Converte de volta para lista de tuplas
+            arestas_list = list(arestas_unicas)
+            nx.draw_networkx_edges(
+                self.nx_grafo,
+                pos,
+                edgelist=arestas_list,
+                edge_color='blue',
+                width=3,
+                alpha=0.8,
+                style='solid',
+                ax=ax
+            )
+        
+        # Desenha caminhos individuais com cores diferentes (opcional, para destacar)
+        for idx, caminho in enumerate(caminhos[:8]):  # Limita a 8 caminhos para não poluir
             if len(caminho) > 1:
                 arestas_caminho = [
                     (caminho[i], caminho[i + 1])
@@ -232,12 +258,11 @@ class VisualizadorGrafo:
                     pos,
                     edgelist=arestas_caminho,
                     edge_color=cor,
-                    width=3,
-                    alpha=0.7,
+                    width=2,
+                    alpha=0.5,
                     style='dashed',
                     ax=ax
                 )
-                vertices_em_caminhos.update(caminho)
         
         # Desenha vértices
         cores_vertices = []
