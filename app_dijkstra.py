@@ -585,6 +585,8 @@ if MAPA_REAL_DISPONIVEL:
                 if 'mapa_real' in st.session_state:
                     del st.session_state['mapa_real']
                 st.rerun()
+        else:
+            # Mapa foi inicializado, mostra interface
             col1, col2 = st.columns([1, 1])
             
             with col1:
