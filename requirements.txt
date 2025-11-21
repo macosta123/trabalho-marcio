@@ -1,5 +1,4 @@
-googlemaps==4.10.0
-folium==0.15.1
-python-dotenv==1.0.1
+# Dependências para algoritmo de Dijkstra
+networkx==3.1
+matplotlib==3.8.0
 streamlit==1.39.0
-streamlit-folium==0.20.0
