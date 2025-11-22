@@ -15,14 +15,7 @@ from aplicacoes import AplicacoesDijkstra
 
 # Importação do mapa real
 from mapa_real import MapaReal
-# Tenta importar streamlit-folium, mas não é obrigatório
-try:
-    from streamlit_folium import st_folium
-    ST_FOLIUM_DISPONIVEL = True
-except ImportError:
-    ST_FOLIUM_DISPONIVEL = False
-    st_folium = None
-
+from streamlit_folium import st_folium
 MAPA_REAL_DISPONIVEL = True
 
 import matplotlib
@@ -666,58 +659,13 @@ if MAPA_REAL_DISPONIVEL:
             with col2:
                 st.subheader("🗺️ Mapa Interativo")
                 
-                # Criar e exibir mapa (método original simples que funcionava)
-                try:
-                    # Verifica se temos um caminho para mostrar
-                    caminho_para_mostrar = None
-                    if 'mapa_caminho' in st.session_state and st.session_state['mapa_caminho']:
-                        caminho_para_mostrar = st.session_state['mapa_caminho']
-                    
-                    # Se temos coordenadas mas não caminho (grafo não carregado), adiciona marcadores
-                    if not caminho_para_mostrar:
-                        if 'mapa_coords_origem' in st.session_state:
-                            mapa_real.coordenadas_origem = st.session_state['mapa_coords_origem']
-                        if 'mapa_coords_destino' in st.session_state:
-                            mapa_real.coordenadas_destino = st.session_state['mapa_coords_destino']
-                    
-                    # Cria o mapa
-                    mapa_folium = mapa_real.criar_mapa_folium(caminho_para_mostrar)
-                    
-                    # Exibe o mapa usando st_folium (método original que funcionava)
-                    if mapa_folium is not None:
-                        if ST_FOLIUM_DISPONIVEL and st_folium is not None:
-                            # Método original simples
-                            st_folium(mapa_folium, width=700, height=500)
-                        else:
-                            # Fallback para HTML se st_folium não estiver disponível
-                            import tempfile
-                            import os
-                            
-                            with tempfile.NamedTemporaryFile(mode='w', suffix='.html', delete=False, encoding='utf-8') as f:
-                                temp_file = f.name
-                            
-                            mapa_folium.save(temp_file)
-                            
-                            with open(temp_file, 'r', encoding='utf-8') as f:
-                                html_content = f.read()
-                            
-                            try:
-                                os.unlink(temp_file)
-                            except:
-                                pass
-                            
-                            if html_content and len(html_content) > 100:
-                                st.components.v1.html(html_content, width=700, height=500, scrolling=False)
-                            else:
-                                st.error("❌ Erro ao gerar HTML do mapa")
-                    else:
-                        st.warning("⚠️ Não foi possível criar o mapa.")
-                            
-                except Exception as e:
-                    st.error(f"❌ Erro ao criar/exibir mapa: {str(e)}")
-                    with st.expander("🔍 Detalhes do erro"):
-                        import traceback
-                        st.code(traceback.format_exc())
+                # Criar e exibir mapa
+                if 'mapa_caminho' in st.session_state:
+                    mapa_folium = mapa_real.criar_mapa_folium(st.session_state['mapa_caminho'])
+                else:
+                    mapa_folium = mapa_real.criar_mapa_folium()
+                
+                st_folium(mapa_folium, width=700, height=500)
             
             st.markdown("---")
             st.info("""
