@@ -530,67 +530,22 @@ if MAPA_REAL_DISPONIVEL:
         
         # Inicializar mapa real
         if 'mapa_real' not in st.session_state:
-            with st.spinner("Carregando mapa de Maricá do OpenStreetMap... (pode levar 30-60 segundos)"):
-                try:
-                    mapa_real = MapaReal("Maricá, RJ, Brasil")
-                    if mapa_real.carregar_mapa():
-                        if mapa_real.grafo_ruas and len(mapa_real.grafo_ruas.nodes()) > 0:
-                            st.session_state['mapa_real'] = mapa_real
-                            num_nos = len(mapa_real.grafo_ruas.nodes())
-                            num_arestas = len(mapa_real.grafo_ruas.edges())
-                            st.success(f"✅ Mapa carregado com sucesso! ({num_nos} nós, {num_arestas} arestas)")
-                        else:
-                            st.warning("⚠️ Mapa carregado mas grafo está vazio. Criando mapa básico...")
-                            # Cria mapa mesmo sem grafo para permitir uso básico
-                            st.session_state['mapa_real'] = mapa_real
-                    else:
-                        st.error("❌ Erro ao carregar mapa do OpenStreetMap.")
-                        st.info("💡 Tentando criar mapa básico sem dados de ruas...")
-                        # Cria instância mesmo sem grafo para permitir uso básico
-                        mapa_real = MapaReal("Maricá, RJ, Brasil")
-                        st.session_state['mapa_real'] = mapa_real
-                        st.warning("⚠️ Mapa básico criado. Funcionalidade limitada (sem rotas de ruas).")
-                except Exception as e:
-                    st.error(f"❌ Erro ao inicializar mapa: {str(e)}")
-                    with st.expander("🔍 Detalhes do erro (clique para ver)"):
-                        import traceback
-                        st.code(traceback.format_exc())
-                    # Cria instância básica mesmo com erro para não quebrar a interface
-                    try:
-                        mapa_real = MapaReal("Maricá, RJ, Brasil")
-                        st.session_state['mapa_real'] = mapa_real
-                        st.warning("⚠️ Mapa básico criado. Funcionalidade limitada.")
-                    except:
-                        st.session_state['mapa_real'] = None
+            with st.spinner("Carregando mapa de Maricá do OpenStreetMap... (pode levar alguns segundos)"):
+                mapa_real = MapaReal("Maricá, RJ, Brasil")
+                if mapa_real.carregar_mapa():
+                    st.session_state['mapa_real'] = mapa_real
+                    st.success("✅ Mapa carregado com sucesso!")
+                else:
+                    st.error("❌ Erro ao carregar mapa. Verifique sua conexão com a internet.")
+                    st.session_state['mapa_real'] = None
         
-        # Mostra interface mesmo se mapa_real for None ou sem grafo
-        mapa_real = st.session_state.get('mapa_real')
-        
-        if mapa_real is None:
-            st.error("❌ Não foi possível inicializar o mapa.")
-            st.info("""
-            **💡 Soluções:**
-            1. Recarregue a página
-            2. Verifique sua conexão com a internet
-            3. No Streamlit Cloud, verifique os logs em "Manage app" → "Logs"
-            """)
-            if st.button("🔄 Tentar Novamente", key="retry_mapa"):
-                if 'mapa_real' in st.session_state:
-                    del st.session_state['mapa_real']
-                st.rerun()
-        else:
-            # Mapa foi inicializado, mostra interface
+        if st.session_state.get('mapa_real'):
+            mapa_real = st.session_state['mapa_real']
+            
             col1, col2 = st.columns([1, 1])
             
             with col1:
                 st.subheader("📍 Endereços")
-                
-                # Verifica se o grafo foi carregado
-                grafo_carregado = mapa_real.grafo_ruas is not None and len(mapa_real.grafo_ruas.nodes()) > 0
-                
-                if not grafo_carregado:
-                    st.warning("⚠️ **Atenção:** Grafo de ruas não foi carregado. Apenas geocodificação está disponível.")
-                    st.info("💡 Você ainda pode geocodificar endereços e ver marcadores no mapa, mas não será possível calcular rotas.")
                 
                 endereco_origem = st.text_input(
                     "Endereço de Origem",
@@ -604,7 +559,7 @@ if MAPA_REAL_DISPONIVEL:
                     key="mapa_destino"
                 )
                 
-                if st.button("🔍 Calcular Rota", type="primary", key="mapa_btn", disabled=not grafo_carregado):
+                if st.button("🔍 Calcular Rota", type="primary", key="mapa_btn"):
                     if not endereco_origem or not endereco_destino:
                         st.warning("Por favor, preencha ambos os endereços!")
                     else:
@@ -648,13 +603,13 @@ if MAPA_REAL_DISPONIVEL:
                                         st.session_state['mapa_coords_destino'] = coords_destino
                                         st.info("✅ Endereços geocodificados! (Rotas não disponíveis sem grafo de ruas)")
                 
-                # Mostrar resultados
-                if 'mapa_caminho' in st.session_state:
-                    distancia_km = st.session_state['mapa_distancia'] / 1000
-                    st.success(f"✅ Rota encontrada!")
-                    st.metric("Distância Total", f"{distancia_km:.2f} km")
-                    st.metric("Distância em Metros", f"{st.session_state['mapa_distancia']:.0f} m")
-                    st.info(f"**Número de segmentos:** {len(st.session_state['mapa_caminho']) - 1}")
+            # Mostrar resultados
+            if 'mapa_caminho' in st.session_state:
+                distancia_km = st.session_state['mapa_distancia'] / 1000
+                st.success(f"✅ Rota encontrada!")
+                st.metric("Distância Total", f"{distancia_km:.2f} km")
+                st.metric("Distância em Metros", f"{st.session_state['mapa_distancia']:.0f} m")
+                st.info(f"**Número de segmentos:** {len(st.session_state['mapa_caminho']) - 1}")
             
             with col2:
                 st.subheader("🗺️ Mapa Interativo")
