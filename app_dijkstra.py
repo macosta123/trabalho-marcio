@@ -608,12 +608,22 @@ if MAPA_REAL_DISPONIVEL:
                 st.subheader("🗺️ Mapa Interativo")
                 
                 # Criar e exibir mapa
-                if 'mapa_caminho' in st.session_state:
-                    mapa_folium = mapa_real.criar_mapa_folium(st.session_state['mapa_caminho'])
-                else:
-                    mapa_folium = mapa_real.criar_mapa_folium()
-                
-                st_folium(mapa_folium, width=700, height=500)
+                try:
+                    if 'mapa_caminho' in st.session_state:
+                        mapa_folium = mapa_real.criar_mapa_folium(st.session_state['mapa_caminho'])
+                    else:
+                        mapa_folium = mapa_real.criar_mapa_folium()
+                    
+                    # Verifica se o mapa foi criado
+                    if mapa_folium is not None:
+                        st_folium(mapa_folium, width=700, height=500)
+                    else:
+                        st.error("❌ Erro: mapa_folium é None")
+                except Exception as e:
+                    st.error(f"❌ Erro ao exibir mapa: {str(e)}")
+                    with st.expander("🔍 Detalhes do erro"):
+                        import traceback
+                        st.code(traceback.format_exc())
             
             st.markdown("---")
             st.info("""
