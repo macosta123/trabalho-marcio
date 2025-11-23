@@ -12,12 +12,7 @@ from grafo import Grafo
 from dijkstra import Dijkstra
 from visualizacao import VisualizadorGrafo
 from aplicacoes import AplicacoesDijkstra
-
-# Importação do mapa real
 from mapa_real import MapaReal
-from streamlit_folium import st_folium
-MAPA_REAL_DISPONIVEL = True
-
 import matplotlib
 matplotlib.use('Agg')  # Backend não-interativo para evitar problemas de display
 import matplotlib.pyplot as plt
@@ -25,6 +20,9 @@ import matplotlib.pyplot as plt
 plt.rcParams['font.family'] = 'sans-serif'
 plt.rcParams['font.sans-serif'] = ['Arial', 'DejaVu Sans', 'Liberation Sans', 'Bitstream Vera Sans', 'sans-serif']
 plt.rcParams['axes.unicode_minus'] = False
+from streamlit_folium import st_folium
+
+MAPA_REAL_DISPONIVEL = True
 
 # Configuração da página
 st.set_page_config(
