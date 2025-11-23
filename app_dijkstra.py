@@ -593,15 +593,10 @@ if MAPA_REAL_DISPONIVEL:
                                                 st.session_state['mapa_no_origem'] = no_origem
                                                 st.session_state['mapa_no_destino'] = no_destino
                                                 st.success("✅ Rota calculada com sucesso!")
-                                            else:
-                                                st.error("❌ Não foi possível encontrar uma rota entre os endereços.")
                                         else:
-                                            st.error("❌ Não foi possível encontrar os pontos no mapa.")
+                                            st.error("❌ Não foi possível encontrar uma rota entre os endereços.")
                                     else:
-                                        # Sem grafo, apenas salva coordenadas para mostrar no mapa
-                                        st.session_state['mapa_coords_origem'] = coords_origem
-                                        st.session_state['mapa_coords_destino'] = coords_destino
-                                        st.info("✅ Endereços geocodificados! (Rotas não disponíveis sem grafo de ruas)")
+                                        st.error("❌ Não foi possível encontrar os pontos no mapa.")
                 
             # Mostrar resultados
             if 'mapa_caminho' in st.session_state:
