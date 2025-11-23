@@ -570,6 +570,7 @@ if MAPA_REAL_DISPONIVEL:
                                 st.error(f"Não foi possível encontrar o endereço de origem: {endereco_origem}")
                             else:
                                 mapa_real.coordenadas_origem = coords_origem
+                                no_origem = mapa_real.encontrar_no_mais_proximo(coords_origem[0], coords_origem[1])
                                 
                                 # Geocodificar destino
                                 coords_destino = mapa_real.geocodificar_endereco(endereco_destino)
@@ -577,22 +578,19 @@ if MAPA_REAL_DISPONIVEL:
                                     st.error(f"Não foi possível encontrar o endereço de destino: {endereco_destino}")
                                 else:
                                     mapa_real.coordenadas_destino = coords_destino
+                                    no_destino = mapa_real.encontrar_no_mais_proximo(coords_destino[0], coords_destino[1])
                                     
-                                    # Só tenta calcular rota se o grafo estiver carregado
-                                    if grafo_carregado:
-                                        no_origem = mapa_real.encontrar_no_mais_proximo(coords_origem[0], coords_origem[1])
-                                        no_destino = mapa_real.encontrar_no_mais_proximo(coords_destino[0], coords_destino[1])
+                                    if no_origem and no_destino:
+                                        # Calcular rota com Dijkstra
+                                        caminho, distancia_metros = mapa_real.dijkstra_ruas(no_origem, no_destino)
                                         
-                                        if no_origem and no_destino:
-                                            # Calcular rota com Dijkstra
-                                            caminho, distancia_metros = mapa_real.dijkstra_ruas(no_origem, no_destino)
-                                            
-                                            if caminho:
-                                                st.session_state['mapa_caminho'] = caminho
-                                                st.session_state['mapa_distancia'] = distancia_metros
-                                                st.session_state['mapa_no_origem'] = no_origem
-                                                st.session_state['mapa_no_destino'] = no_destino
-                                                st.success("✅ Rota calculada com sucesso!")
+                                        if caminho:
+                                            st.session_state['mapa_caminho'] = caminho
+                                            st.session_state['mapa_distancia'] = distancia_metros
+                                            st.session_state['mapa_no_origem'] = no_origem
+                                            st.session_state['mapa_no_destino'] = no_destino
+                                            st.success("✅ Rota calculada com sucesso!")
+                                            st.rerun()
                                         else:
                                             st.error("❌ Não foi possível encontrar uma rota entre os endereços.")
                                     else:
