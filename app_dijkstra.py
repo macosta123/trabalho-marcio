@@ -192,12 +192,10 @@ with aba1:
     st.markdown("Encontra o vértice mais central do grafo (menor soma de distâncias para todos os outros).")
     
     if st.button("🔍 Encontrar Vértice Mais Central", key="aba3_btn"):
-        st.warning("[DIAG] Botão calcular rota pressionado")
         resultado = aplicacoes.encontrar_vertice_mais_central()
         st.session_state['aba3_resultado'] = resultado
-    
+
     if 'aba3_resultado' in st.session_state:
-        st.warning("[DIAG] Iniciando geocodificação")
         resultado = st.session_state['aba3_resultado']
         
         col1, col2 = st.columns([1, 1])
@@ -234,7 +232,6 @@ with aba4:
     st.header("🚚 Planejamento de Logística")
     st.markdown("Planeja rotas de entrega a partir de um depósito central. Os pesos representam custo de transporte.")
     
-    st.warning("[DIAG] Tentando exibir mapa_folium")
     vertices_disponiveis = list(range(grafo.num_vertices))
     
     deposito = st.selectbox(
