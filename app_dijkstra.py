@@ -169,138 +169,158 @@ with aba1:
                 if 'aba1_distancia' in st.session_state:
                     del st.session_state['aba1_distancia']
             else:
-                st.session_state['aba1_caminho'] = caminho
-                st.session_state['aba1_distancia'] = distancia
-        
-        if 'aba1_caminho' in st.session_state:
-            caminho = st.session_state['aba1_caminho']
-            distancia = st.session_state['aba1_distancia']
-            
-            st.success(f"✅ Caminho encontrado!")
-            st.info(f"**Distância Total:** {distancia}")
-            caminho_str = " → ".join(str(v) for v in caminho)
-            st.markdown(f"**Caminho:** {caminho_str}")
-    
-    with col2:
-        caminho_viz = st.session_state.get('aba1_caminho')
-        # Usa os valores do selectbox que já estão no session_state via key
-        origem_viz = st.session_state.get('aba1_origem', origem)
-        destino_viz = st.session_state.get('aba1_destino', destino)
-        distancia_viz = st.session_state.get('aba1_distancia')
-        
-        fig, ax = plt.subplots(figsize=(10, 8))
-        visualizador.visualizar_grafo(
-            caminho_minimo=caminho_viz,
-            origem=origem_viz,
-            destino=destino_viz,
-            distancia_total=distancia_viz,
-            titulo="Caminho Mínimo",
-            ax=ax,
-            fig=fig
-        )
-        st.pyplot(fig)
-        plt.close(fig)
-
-# ============================================
-# ABA 2: ROTEAMENTO DE REDES
-# ============================================
-with aba2:
-    st.header("🌐 Roteamento de Redes")
-    st.markdown("Simula roteamento de pacotes em uma rede de computadores. Os pesos representam latência (ms) entre roteadores.")
-    
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        vertices_disponiveis = list(range(grafo.num_vertices))
-        
-        roteador_origem = st.selectbox(
-            "Roteador de Origem",
-            options=vertices_disponiveis,
-            index=0,
-            key="aba2_origem"
-        )
-        
-        roteador_destino = st.selectbox(
-            "Roteador de Destino",
-            options=vertices_disponiveis,
-            index=min(1, len(vertices_disponiveis) - 1),
-            key="aba2_destino"
-        )
-        
-        if st.button("📡 Calcular Rota", key="aba2_btn"):
-            resultado = aplicacoes.roteamento_rede(roteador_origem, roteador_destino)
-            st.session_state['aba2_resultado'] = resultado
-        
-        if 'aba2_resultado' in st.session_state:
-            resultado = st.session_state['aba2_resultado']
-            
-            if resultado['sucesso']:
-                st.success("✅ Rota encontrada!")
-                st.metric("Latência Total", f"{resultado['latencia_total_ms']} ms")
-                st.metric("Número de Hops", resultado['numero_hops'])
-                
-                st.write("**Roteadores no caminho:**")
-                st.code(" → ".join(str(r) for r in resultado['roteadores']))
-                
-                with st.expander("📋 Detalhes dos Hops"):
-                    for hop in resultado['hops']:
-                        st.write(f"Roteador {hop['de']} → Roteador {hop['para']}: {hop['latencia_ms']} ms")
-            else:
-                st.error(resultado['mensagem'])
-    
-    with col2:
-        st.write("**Visualização:**")
-        fig, ax = plt.subplots(figsize=(10, 8))
-        if 'aba2_resultado' in st.session_state and st.session_state['aba2_resultado']['sucesso']:
-            resultado = st.session_state['aba2_resultado']
-            visualizador.visualizar_grafo(
-                caminho_minimo=resultado['caminho'],
-                origem=roteador_origem,
-                destino=roteador_destino,
-                distancia_total=resultado['latencia_total_ms'],
-                titulo="Roteamento de Rede",
-                ax=ax,
-                fig=fig
-            )
-        else:
-            visualizador.visualizar_grafo(
-                caminho_minimo=None,
-                origem=roteador_origem,
-                destino=roteador_destino,
-                distancia_total=None,
-                titulo="Roteamento de Rede\n(Selecione origem e destino)",
-                ax=ax,
-                fig=fig
-            )
-        st.pyplot(fig)
-        plt.close(fig)
-
-# ============================================
-# ABA 3: CENTRALIDADE
-# ============================================
-with aba3:
+                with aba7:
+                    import sys
+                    print("[DIAG] Entrou na aba Mapa Real", file=sys.stderr)
+                    st.header("🗺️ Navegação em Maricá - Mapa Real")
+                    st.markdown("""
+                    Use endereços reais de Maricá para calcular o caminho mais rápido usando o algoritmo de Dijkstra.
+                    O sistema carrega o mapa real da cidade do OpenStreetMap e calcula rotas baseadas nas ruas reais.
+                    """)
+                    print("[DIAG] Antes de inicializar mapa_real", file=sys.stderr)
+                    erro_mapa = False
+                    if 'mapa_real' not in st.session_state:
+                        with st.spinner("Carregando mapa de Maricá do OpenStreetMap... (pode levar alguns segundos)"):
+                            mapa_real = MapaReal("Maricá, RJ, Brasil")
+                            print("[DIAG] Instanciou MapaReal", file=sys.stderr)
+                            if mapa_real.carregar_mapa():
+                                print("[DIAG] Mapa carregado com sucesso", file=sys.stderr)
+                                st.session_state['mapa_real'] = mapa_real
+                                st.success("✅ Mapa carregado com sucesso!")
+                            else:
+                                print("[DIAG] Falha ao carregar mapa", file=sys.stderr)
+                                erro_mapa = True
+                                st.session_state['mapa_real'] = None
+                                st.warning(f"[DIAG] mapa_real: {mapa_real}")
+                    mapa_real = st.session_state.get('mapa_real')
+                    st.warning(f"[DIAG] mapa_real: {mapa_real}")
+                    col1, col2 = st.columns([1, 1])
+                    with col1:
+                        st.subheader("📍 Endereços")
+                        endereco_origem = st.text_input(
+                            "Endereço de Origem",
+                            placeholder="Ex: Praça Orlando de Barros Pimentel, Maricá",
+                            key="mapa_origem"
+                        )
+                        endereco_destino = st.text_input(
+                            "Endereço de Destino",
+                            placeholder="Ex: Praia de Itaipuaçu, Maricá",
+                            key="mapa_destino"
+                        )
+                        print(f"[DIAG] Endereços: origem={endereco_origem}, destino={endereco_destino}", file=sys.stderr)
+                        if erro_mapa:
+                            st.error("❌ Erro ao carregar mapa. Verifique sua conexão com a internet ou tente novamente mais tarde.")
+                        if mapa_real:
+                            if st.button("🔍 Calcular Rota", type="primary", key="mapa_btn"):
+                                print("[DIAG] Botão calcular rota pressionado", file=sys.stderr)
+                                if not endereco_origem or not endereco_destino:
+                                    st.warning("Por favor, preencha ambos os endereços!")
+                                else:
+                                    with st.spinner("Geocodificando endereços e calculando rota..."):
+                                        print("[DIAG] Iniciando geocodificação", file=sys.stderr)
+                                        coords_origem = mapa_real.geocodificar_endereco(endereco_origem)
+                                        print(f"[DIAG] coords_origem: {coords_origem}", file=sys.stderr)
+                                        if not coords_origem:
+                                            st.error(f"Não foi possível encontrar o endereço de origem: {endereco_origem}")
+                                        else:
+                                            mapa_real.coordenadas_origem = coords_origem
+                                            no_origem = mapa_real.encontrar_no_mais_proximo(coords_origem[0], coords_origem[1])
+                                            print(f"[DIAG] no_origem: {no_origem}", file=sys.stderr)
+                                            coords_destino = mapa_real.geocodificar_endereco(endereco_destino)
+                                            print(f"[DIAG] coords_destino: {coords_destino}", file=sys.stderr)
+                                            if not coords_destino:
+                                                st.error(f"Não foi possível encontrar o endereço de destino: {endereco_destino}")
+                                            else:
+                                                mapa_real.coordenadas_destino = coords_destino
+                                                no_destino = mapa_real.encontrar_no_mais_proximo(coords_destino[0], coords_destino[1])
+                                                print(f"[DIAG] no_destino: {no_destino}", file=sys.stderr)
+                                                if no_origem and no_destino:
+                                                    caminho, distancia_metros = mapa_real.dijkstra_ruas(no_origem, no_destino)
+                                                    print(f"[DIAG] caminho: {caminho}, distancia_metros: {distancia_metros}", file=sys.stderr)
+                                                    if caminho:
+                                                        st.session_state['mapa_caminho'] = caminho
+                                                        st.session_state['mapa_distancia'] = distancia_metros
+                                                        st.session_state['mapa_no_origem'] = no_origem
+                                                        st.session_state['mapa_no_destino'] = no_destino
+                                                        st.success("✅ Rota calculada com sucesso!")
+                                                        st.rerun()
+                                                    else:
+                                                        st.error("❌ Não foi possível encontrar uma rota entre os endereços.")
+                                                else:
+                                                    st.error("❌ Não foi possível encontrar os pontos no mapa.")
+                    if mapa_real and 'mapa_caminho' in st.session_state:
+                        print(f"[DIAG] Exibindo resultados da rota: mapa_caminho={st.session_state['mapa_caminho']}", file=sys.stderr)
+                        distancia_km = st.session_state['mapa_distancia'] / 1000
+                        st.success(f"✅ Rota encontrada!")
+                        st.metric("Distância Total", f"{distancia_km:.2f} km")
+                        st.metric("Distância em Metros", f"{st.session_state['mapa_distancia']:.0f} m")
+                        st.info(f"**Número de segmentos:** {len(st.session_state['mapa_caminho']) - 1}")
+                    with col2:
+                        st.warning("[DIAG] Entrou na aba Mapa Real")
+                        st.subheader("🗺️ Mapa Interativo")
+                        if erro_mapa:
+                            st.warning("Mapa não disponível. Não foi possível carregar os dados do OpenStreetMap.")
+                        elif mapa_real:
+                            print("[DIAG] Tentando exibir mapa_folium", file=sys.stderr)
+                            st.warning("[DIAG] Antes de inicializar mapa_real")
+                            try:
+                                if 'mapa_caminho' in st.session_state:
+                                    mapa_folium = mapa_real.criar_mapa_folium(st.session_state['mapa_caminho'])
+                                else:
+                                    st.warning("[DIAG] Instanciou MapaReal")
+                                    mapa_folium = mapa_real.criar_mapa_folium()
+                                    st.warning("[DIAG] Mapa carregado com sucesso")
+                                    st.warning(f"[DIAG] mapa_folium: {mapa_folium}")
+                                if mapa_folium is not None:
+                                    st_folium(mapa_folium, width=700, height=500)
+                                    st.warning("[DIAG] Falha ao carregar mapa")
+                                else:
+                                    st.error("❌ Erro: mapa_folium é None")
+                            except Exception as e:
+                                st.warning(f"[DIAG] mapa_real: {mapa_real}")
+                                print(f"[DIAG] Erro ao exibir mapa: {e}", file=sys.stderr)
+                                st.error(f"❌ Erro ao exibir mapa: {str(e)}")
+                                with st.expander("🔍 Detalhes do erro"):
+                                    import traceback
+                                    st.code(traceback.format_exc())
+                    st.markdown("---")
+                    st.info("""
+                    **💡 Dicas:**
+                    - Use endereços específicos de Maricá para melhores resultados
+                    - Exemplos: "Praça Orlando de Barros Pimentel", "Praia de Itaipuaçu", "Centro, Maricá"
+                    - O sistema usa dados do OpenStreetMap e calcula rotas baseadas nas ruas reais
+                    - O algoritmo de Dijkstra próprio é aplicado no grafo de ruas da cidade
+                    """)
+                    st.warning(f"[DIAG] Endereços: origem={endereco_origem}, destino={endereco_destino}")
     st.header("⭐ Análise de Centralidade")
     st.markdown("Encontra o vértice mais central do grafo (menor soma de distâncias para todos os outros).")
     
     if st.button("🔍 Encontrar Vértice Mais Central", key="aba3_btn"):
+        st.warning("[DIAG] Botão calcular rota pressionado")
         resultado = aplicacoes.encontrar_vertice_mais_central()
         st.session_state['aba3_resultado'] = resultado
     
     if 'aba3_resultado' in st.session_state:
+        st.warning("[DIAG] Iniciando geocodificação")
         resultado = st.session_state['aba3_resultado']
+        st.warning(f"[DIAG] coords_origem: {coords_origem}")
         
         col1, col2 = st.columns([1, 1])
         
         with col1:
             st.success(f"✅ Vértice mais central: **{resultado['vertice_central']}**")
+            st.warning(f"[DIAG] no_origem: {no_origem}")
             st.metric("Soma de Distâncias", resultado['soma_distancias'])
+            st.warning(f"[DIAG] coords_destino: {coords_destino}")
             st.metric("Distância Média", f"{resultado['media_distancias']:.2f}")
             
             st.write("**Ranking de centralidade (menor = mais central):**")
             ranking = sorted(resultado['distancias_totais'].items(), key=lambda x: x[1])
             for i, (vertice, soma) in enumerate(ranking[:10], 1):
+                st.warning(f"[DIAG] no_destino: {no_destino}")
                 marcador = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
                 st.write(f"{marcador} Vértice {vertice}: {soma}")
+                st.warning(f"[DIAG] caminho: {caminho}, distancia_metros: {distancia_metros}")
         
         with col2:
             fig, ax = plt.subplots(figsize=(10, 8))
@@ -313,6 +333,7 @@ with aba3:
                 ax=ax,
                 fig=fig
             )
+            st.warning(f"[DIAG] Exibindo resultados da rota: mapa_caminho={st.session_state['mapa_caminho']}")
             st.pyplot(fig)
             plt.close(fig)
 
@@ -323,6 +344,7 @@ with aba4:
     st.header("🚚 Planejamento de Logística")
     st.markdown("Planeja rotas de entrega a partir de um depósito central. Os pesos representam custo de transporte.")
     
+    st.warning("[DIAG] Tentando exibir mapa_folium")
     vertices_disponiveis = list(range(grafo.num_vertices))
     
     deposito = st.selectbox(
