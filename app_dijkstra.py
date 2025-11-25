@@ -149,6 +149,8 @@ with aba1:
             if caminho is None:
                 st.error(f"❌ Não existe caminho entre o vértice {origem} e o vértice {destino}!")
             else:
+                st.session_state['aba1_caminho'] = caminho
+                st.session_state['aba1_distancia'] = distancia
                 st.rerun()
         
         if 'aba1_caminho' in st.session_state:
