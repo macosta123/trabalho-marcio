@@ -287,89 +287,18 @@ with aba4:
             plt.close(fig)
 
 # ============================================
-# ABA 5: REDES SOCIAIS
+# ABA 5: ANÁLISE DE CONECTIVIDADE
 # ============================================
 with aba5:
-    st.header("👥 Análise de Redes Sociais")
-    st.markdown("Calcula o grau de separação entre duas pessoas. Os pesos representam força da conexão (menor = mais forte).")
-    
-    col1, col2 = st.columns([1, 1])
-    
-    with col1:
-        vertices_disponiveis = list(range(grafo.num_vertices))
-        
-        pessoa1 = st.selectbox(
-            "Pessoa 1",
-            options=vertices_disponiveis,
-            index=0,
-            key="aba5_pessoa1"
-        )
-        
-        pessoa2 = st.selectbox(
-            "Pessoa 2",
-            options=vertices_disponiveis,
-            index=min(1, len(vertices_disponiveis) - 1),
-            key="aba5_pessoa2"
-        )
-        
-        if st.button("🔗 Calcular Grau de Separação", key="aba5_btn"):
-            resultado = aplicacoes.grau_separacao(pessoa1, pessoa2)
-            st.session_state['aba5_resultado'] = resultado
-        
-        if 'aba5_resultado' in st.session_state:
-            resultado = st.session_state['aba5_resultado']
-            
-            if resultado['conectadas']:
-                st.success(f"✅ Pessoas conectadas!")
-                st.metric("Grau de Separação", resultado['grau_separacao'])
-                st.metric("Força da Conexão", resultado['forca_conexao'])
-                
-                st.write("**Cadeia de amizade:**")
-                cadeia = " → ".join(str(p) for p in resultado['cadeia_amizade'])
-                st.code(cadeia)
-            else:
-                st.error(resultado['mensagem'])
-    
-    with col2:
-        st.write("**Visualização:**")
-        fig, ax = plt.subplots(figsize=(10, 8))
-        if 'aba5_resultado' in st.session_state and st.session_state['aba5_resultado']['conectadas']:
-            resultado = st.session_state['aba5_resultado']
-            visualizador.visualizar_grafo(
-                caminho_minimo=resultado['caminho'],
-                origem=pessoa1,
-                destino=pessoa2,
-                distancia_total=resultado['forca_conexao'],
-                titulo="Rede Social - Grau de Separação",
-                ax=ax,
-                fig=fig
-            )
-        else:
-            visualizador.visualizar_grafo(
-                caminho_minimo=None,
-                origem=pessoa1,
-                destino=pessoa2,
-                distancia_total=None,
-                titulo="Rede Social\n(Selecione duas pessoas)",
-                ax=ax,
-                fig=fig
-            )
-        st.pyplot(fig)
-        plt.close(fig)
-
-# ============================================
-# ABA 6: ANÁLISE DE CONECTIVIDADE
-# ============================================
-with aba6:
     st.header("📊 Análise de Conectividade")
     st.markdown("Analisa métricas globais de conectividade do grafo: diâmetro, raio, distâncias médias, etc.")
     
-    if st.button("📈 Analisar Conectividade", key="aba7_btn"):
+    if st.button("📈 Analisar Conectividade", key="aba5_btn"):
         resultado = aplicacoes.analisar_conectividade()
-        st.session_state['aba7_resultado'] = resultado
+        st.session_state['aba5_resultado'] = resultado
     
-    if 'aba7_resultado' in st.session_state:
-        resultado = st.session_state['aba7_resultado']
+    if 'aba5_resultado' in st.session_state:
+        resultado = st.session_state['aba5_resultado']
         
         col1, col2, col3, col4 = st.columns(4)
         
@@ -425,10 +354,10 @@ with aba6:
             plt.close(fig2)
 
 # ============================================
-# ABA 7: MAPA REAL DE MARICÁ (Opcional)
+# ABA 6: MAPA REAL DE MARICÁ (Opcional)
 # ============================================
 if MAPA_REAL_DISPONIVEL:
-    with aba7:
+    with aba6:
         st.header("🗺️ Navegação em Maricá - Mapa Real")
         st.markdown("""
         Use endereços reais de Maricá para calcular o caminho mais rápido usando o algoritmo de Dijkstra.
