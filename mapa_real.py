@@ -15,29 +15,29 @@ import heapq
 
 
 class MapaReal:
-        def get_rotas_alternativas(self, origem: int, destino: int, k: int = 3) -> List[Tuple[List[int], float]]:
-            """
-            Retorna até k menores caminhos (alternativas) entre origem e destino.
-            Cada caminho é uma lista de nós e seu custo total (soma dos pesos).
-            """
-            if self.grafo_ruas is None:
-                return []
-            try:
-                caminhos = []
-                # Usa shortest_simple_paths do networkx
-                for path in nx.shortest_simple_paths(self.grafo_ruas, origem, destino, weight='length'):
-                    # Calcula o custo total do caminho
-                    custo = 0.0
-                    for i in range(len(path) - 1):
-                        aresta_data = self.grafo_ruas.get_edge_data(path[i], path[i+1])
-                        if aresta_data:
-                            primeiro_edge = list(aresta_data.values())[0]
-                            peso = primeiro_edge.get('length', 0)
-                            custo += peso
-                    caminhos.append((path, custo))
-                    if len(caminhos) >= k:
-                        break
-                return caminhos
+    def get_rotas_alternativas(self, origem: int, destino: int, k: int = 3) -> List[Tuple[List[int], float]]:
+        """
+        Retorna até k menores caminhos (alternativas) entre origem e destino.
+        Cada caminho é uma lista de nós e seu custo total (soma dos pesos).
+        """
+        if self.grafo_ruas is None:
+            return []
+        try:
+            caminhos = []
+            # Usa shortest_simple_paths do networkx
+            for path in nx.shortest_simple_paths(self.grafo_ruas, origem, destino, weight='length'):
+                # Calcula o custo total do caminho
+                custo = 0.0
+                for i in range(len(path) - 1):
+                    aresta_data = self.grafo_ruas.get_edge_data(path[i], path[i+1])
+                    if aresta_data:
+                        primeiro_edge = list(aresta_data.values())[0]
+                        peso = primeiro_edge.get('length', 0)
+                        custo += peso
+                caminhos.append((path, custo))
+                if len(caminhos) >= k:
+                    break
+            return caminhos
             except Exception as e:
                 print(f"Erro ao calcular rotas alternativas: {e}")
                 return []
