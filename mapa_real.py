@@ -15,6 +15,32 @@ import heapq
 
 
 class MapaReal:
+        def get_rotas_alternativas(self, origem: int, destino: int, k: int = 3) -> List[Tuple[List[int], float]]:
+            """
+            Retorna até k menores caminhos (alternativas) entre origem e destino.
+            Cada caminho é uma lista de nós e seu custo total (soma dos pesos).
+            """
+            if self.grafo_ruas is None:
+                return []
+            try:
+                caminhos = []
+                # Usa shortest_simple_paths do networkx
+                for path in nx.shortest_simple_paths(self.grafo_ruas, origem, destino, weight='length'):
+                    # Calcula o custo total do caminho
+                    custo = 0.0
+                    for i in range(len(path) - 1):
+                        aresta_data = self.grafo_ruas.get_edge_data(path[i], path[i+1])
+                        if aresta_data:
+                            primeiro_edge = list(aresta_data.values())[0]
+                            peso = primeiro_edge.get('length', 0)
+                            custo += peso
+                    caminhos.append((path, custo))
+                    if len(caminhos) >= k:
+                        break
+                return caminhos
+            except Exception as e:
+                print(f"Erro ao calcular rotas alternativas: {e}")
+                return []
     """Classe para trabalhar com mapas reais e aplicar Dijkstra."""
     
     def __init__(self, cidade: str = "Maricá, RJ, Brasil"):
@@ -265,22 +291,39 @@ class MapaReal:
         
         mapa = folium.Map(location=[centro_lat, centro_lon], zoom_start=13)
         
-        # Desenha o caminho se fornecido
+        # Desenha o caminho se fornecido, mostrando segmentos e pesos
         if caminho and len(caminho) > 1:
             coordenadas_caminho = []
-            for no in caminho:
-                lat = self.grafo_ruas.nodes[no].get('y')
-                lon = self.grafo_ruas.nodes[no].get('x')
-                if lat and lon:
-                    coordenadas_caminho.append([lat, lon])
-            
-            if coordenadas_caminho:
-                folium.PolyLine(
-                    coordenadas_caminho,
-                    color='blue',
-                    weight=5,
-                    opacity=0.7
-                ).add_to(mapa)
+            for i in range(len(caminho) - 1):
+                no_atual = caminho[i]
+                no_prox = caminho[i + 1]
+                lat1 = self.grafo_ruas.nodes[no_atual].get('y')
+                lon1 = self.grafo_ruas.nodes[no_atual].get('x')
+                lat2 = self.grafo_ruas.nodes[no_prox].get('y')
+                lon2 = self.grafo_ruas.nodes[no_prox].get('x')
+                if lat1 and lon1 and lat2 and lon2:
+                    # Adiciona segmento
+                    folium.PolyLine(
+                        [[lat1, lon1], [lat2, lon2]],
+                        color='blue',
+                        weight=5,
+                        opacity=0.7
+                    ).add_to(mapa)
+                    # Obtém peso (distância)
+                    aresta_data = self.grafo_ruas.get_edge_data(no_atual, no_prox)
+                    peso = None
+                    if aresta_data:
+                        primeiro_edge = list(aresta_data.values())[0]
+                        peso = primeiro_edge.get('length', None)
+                    # Adiciona popup no meio do segmento
+                    latm = (lat1 + lat2) / 2
+                    lonm = (lon1 + lon2) / 2
+                    popup_text = f"Segmento: {no_atual} → {no_prox}<br>Distância: {peso:.1f} m" if peso else f"Segmento: {no_atual} → {no_prox}"
+                    folium.Marker(
+                        location=[latm, lonm],
+                        popup=popup_text,
+                        icon=folium.Icon(color='blue', icon='info-sign')
+                    ).add_to(mapa)
         
         # Marca origem
         if self.coordenadas_origem:

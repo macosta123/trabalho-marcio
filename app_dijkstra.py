@@ -515,6 +515,43 @@ with aba6:
                 st.metric("Distância Total", f"{distancia_km:.2f} km")
                 st.metric("Distância em Metros", f"{st.session_state['mapa_distancia']:.0f} m")
                 st.info(f"**Número de segmentos:** {len(st.session_state['mapa_caminho']) - 1}")
+
+                # Exibir segmentos e pesos
+                st.markdown("### Segmentos do Caminho Mínimo")
+                caminho = st.session_state['mapa_caminho']
+                for i in range(len(caminho) - 1):
+                    no_atual = caminho[i]
+                    no_prox = caminho[i+1]
+                    aresta_data = mapa_real.grafo_ruas.get_edge_data(no_atual, no_prox)
+                    peso = None
+                    if aresta_data:
+                        primeiro_edge = list(aresta_data.values())[0]
+                        peso = primeiro_edge.get('length', None)
+                    st.write(f"{no_atual} → {no_prox} | Distância: {peso:.1f} m" if peso else f"{no_atual} → {no_prox}")
+
+                # Rotas alternativas
+                st.markdown("### Rotas Alternativas")
+                alternativas = mapa_real.get_rotas_alternativas(st.session_state['mapa_no_origem'], st.session_state['mapa_no_destino'], k=3)
+                for idx, (alt_caminho, alt_dist) in enumerate(alternativas):
+                    if alt_caminho == caminho:
+                        st.markdown(f"**Alternativa {idx+1} (Escolhida):** {alt_caminho} | Distância: {alt_dist:.1f} m")
+                    else:
+                        st.markdown(f"Alternativa {idx+1}: {alt_caminho} | Distância: {alt_dist:.1f} m")
+                        # Exibir segmentos e pesos da alternativa
+                        with st.expander(f"Ver segmentos da alternativa {idx+1}"):
+                            for i in range(len(alt_caminho) - 1):
+                                no_atual = alt_caminho[i]
+                                no_prox = alt_caminho[i+1]
+                                aresta_data = mapa_real.grafo_ruas.get_edge_data(no_atual, no_prox)
+                                peso = None
+                                if aresta_data:
+                                    primeiro_edge = list(aresta_data.values())[0]
+                                    peso = primeiro_edge.get('length', None)
+                                st.write(f"{no_atual} → {no_prox} | Distância: {peso:.1f} m" if peso else f"{no_atual} → {no_prox}")
+
+                # Explicação da escolha
+                st.markdown("### Justificativa da Escolha")
+                st.info("O algoritmo de Dijkstra seleciona o caminho de menor distância total entre origem e destino. As alternativas apresentadas possuem distâncias maiores, por isso o caminho mínimo é considerado o melhor para este caso.")
         
         with col2:
             st.subheader("🗺️ Mapa Interativo")
