@@ -15,6 +15,7 @@ import heapq
 
 
 class MapaReal:
+    """Classe para trabalhar com mapas reais e aplicar Dijkstra."""
     def get_rotas_alternativas(self, origem: int, destino: int, k: int = 3) -> List[Tuple[List[int], float]]:
         """
         Retorna até k menores caminhos (alternativas) entre origem e destino.
@@ -38,9 +39,9 @@ class MapaReal:
                 if len(caminhos) >= k:
                     break
             return caminhos
-            except Exception as e:
-                print(f"Erro ao calcular rotas alternativas: {e}")
-                return []
+        except Exception as e:
+            print(f"Erro ao calcular rotas alternativas: {e}")
+            return []
     """Classe para trabalhar com mapas reais e aplicar Dijkstra."""
     
     def __init__(self, cidade: str = "Maricá, RJ, Brasil"):
