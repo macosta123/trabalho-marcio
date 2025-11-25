@@ -226,6 +226,12 @@ with aba2:
                 with st.expander("📋 Detalhes dos Hops"):
                     for hop in resultado['hops']:
                         st.write(f"Roteador {hop['de']} → Roteador {hop['para']}: {hop['latencia_ms']} ms")
+                    # Explicação dos custos dos segmentos
+                    st.markdown("### Explicação dos custos dos segmentos")
+                    explicacao = []
+                    for hop in resultado['hops']:
+                        explicacao.append(f"{hop['de']} → {hop['para']} (latência: {hop['latencia_ms']} ms)")
+                    st.info(" | ".join(explicacao))
             else:
                 st.error(resultado['mensagem'])
     
@@ -343,7 +349,15 @@ with aba4:
             st.write("**Rotas de entrega:**")
             for destino, info in resultado['rotas'].items():
                 caminho_str = " → ".join(str(v) for v in info['caminho'])
-                st.write(f"**Para {destino}:** {caminho_str} (Custo: {info['custo']})")
+                st.write(f"**Para {destino}:** {caminho_str} (Custo total: {info['custo']})")
+                # Explicação dos custos dos segmentos
+                explicacao = []
+                caminho = info['caminho']
+                for i in range(len(caminho) - 1):
+                    v1, v2 = caminho[i], caminho[i+1]
+                    peso = grafo.obter_peso(v1, v2)
+                    explicacao.append(f"{v1} → {v2} (custo: {peso})")
+                st.info(" | ".join(explicacao))
         
         with col2:
             # Visualizar todas as rotas
