@@ -151,7 +151,6 @@ with aba1:
             else:
                 st.session_state['aba1_caminho'] = caminho
                 st.session_state['aba1_distancia'] = distancia
-                st.session_state['aba1_origem'] = origem
                 st.session_state['aba1_destino'] = destino
                 st.rerun()
         
@@ -160,7 +159,7 @@ with aba1:
             distancia = st.session_state['aba1_distancia']
             
             st.success(f"✅ Caminho encontrado!")
-            st.info(f"**Distância Total:** {distancia}"), aba8,
+            st.info(f"**Distância Total:** {distancia}")
             caminho_str = " → ".join(str(v) for v in caminho)
             st.markdown(f"**Caminho:** {caminho_str}")
     
