@@ -460,7 +460,11 @@ with aba6:
                 st.session_state['mapa_real'] = mapa_real
                 st.success("✅ Mapa carregado com sucesso!")
             else:
-                st.error("❌ Erro ao carregar mapa. Verifique sua conexão com a internet.")
+                erro_msg = getattr(mapa_real, 'ultimo_erro', None)
+                if erro_msg:
+                    st.error(f"❌ Erro ao carregar mapa: {erro_msg}")
+                else:
+                    st.error("❌ Erro ao carregar mapa. Verifique sua conexão com a internet ou se o serviço de mapas está disponível.")
                 st.session_state['mapa_real'] = None
     
     if st.session_state.get('mapa_real'):

@@ -67,18 +67,13 @@ class MapaReal:
             True se carregou com sucesso, False caso contrário
         """
         try:
-            # Busca o grafo de ruas da cidade
-            # Usa network_type='drive' para apenas ruas para carros
             self.grafo_ruas = ox.graph_from_place(
                 self.cidade,
                 network_type='drive'
             )
-            
-            # Mantém em lat/lon para facilitar geocodificação
-            # Não projeta para manter compatibilidade com coordenadas
-            
             return True
         except Exception as e:
+            self.ultimo_erro = str(e)
             print(f"Erro ao carregar mapa: {e}")
             return False
     
