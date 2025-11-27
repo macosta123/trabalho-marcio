@@ -452,19 +452,28 @@ with aba6:
     O sistema carrega o mapa real da cidade do OpenStreetMap e calcula rotas baseadas nas ruas reais.
     """)
     
+    # Campo para o usuário escolher o local
+    local_padrao = "Maricá, RJ, Brasil"
+    local_usuario = st.text_input(
+        "Local para o mapa (cidade, país, bairro, etc.)",
+        value=local_padrao,
+        help="Digite o nome do local desejado. Exemplo: 'Paris, França', 'Nova York, EUA', 'Centro, São Paulo, Brasil'"
+    )
+
     # Inicializar mapa real
-    if 'mapa_real' not in st.session_state:
-        with st.spinner("Carregando mapa de Maricá do OpenStreetMap... (pode levar alguns segundos)"):
-            mapa_real = MapaReal("Maricá, RJ, Brasil")
+    if 'mapa_real' not in st.session_state or st.session_state.get('mapa_local') != local_usuario:
+        with st.spinner(f"Carregando mapa de {local_usuario} do OpenStreetMap... (pode levar alguns segundos)"):
+            mapa_real = MapaReal(local_usuario)
             if mapa_real.carregar_mapa():
                 st.session_state['mapa_real'] = mapa_real
-                st.success("✅ Mapa carregado com sucesso!")
+                st.session_state['mapa_local'] = local_usuario
+                st.success(f"✅ Mapa de {local_usuario} carregado com sucesso!")
             else:
                 erro_msg = getattr(mapa_real, 'ultimo_erro', None)
                 if erro_msg:
                     st.error(f"❌ Erro ao carregar mapa: {erro_msg}")
                 else:
-                    st.error("❌ Erro ao carregar mapa. Verifique sua conexão com a internet ou se o serviço de mapas está disponível.")
+                    st.error(f"❌ Erro ao carregar mapa de {local_usuario}. Verifique sua conexão com a internet ou se o serviço de mapas está disponível.")
                 st.session_state['mapa_real'] = None
     
     if st.session_state.get('mapa_real'):
